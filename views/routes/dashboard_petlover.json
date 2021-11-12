@@ -1,0 +1,132 @@
+{
+          "Banner_details": [
+          {
+              "_id" : "1231231",
+              "title" : "banner - 1",
+              "img_path" : "http://mysalveo.com/api/uploads/images.jpeg"
+          },
+          {
+              "_id" : "1231231",
+              "title" : "banner - 2",
+              "img_path" : "http://mysalveo.com/api/uploads/images.jpeg"
+          },
+          {
+              "_id" : "1231231",
+              "title" : "banner - 3",
+              "img_path" : "http://mysalveo.com/api/uploads/images.jpeg"
+          }
+        ],
+          "Doctor_details" : [
+                {
+                  "_id":"12345678909865432",
+                  "doctor_name" : "Dr Mohammed imthiyas",
+                  "doctor_img" :"http://mysalveo.com/api/uploads/images.jpeg",
+                  "specialization" : [{"specialization":"spec - 1"},{"specialization":"spec - 2"},{"specialization":"spec - 3"},{"specialization":"spec - 4"}],
+                  "star_count" : 4 ,
+                  "review_count" : 223
+                },
+                {
+                  "_id":"12345678909865432",
+                  "doctor_name" : "Dr Mohammed imthiyas",
+                  "doctor_img" :"http://mysalveo.com/api/uploads/images.jpeg",
+                  "specialization" : [{"specialization":"spec - 1"},{"specialization":"spec - 2"},{"specialization":"spec - 3"},{"specialization":"spec - 4"}],
+                  "star_count" : 4 ,
+                  "review_count" : 223
+                },
+                {
+                  "_id":"12345678909865432",
+                  "doctor_name" : "Dr Mohammed imthiyas",
+                  "doctor_img" :"http://mysalveo.com/api/uploads/images.jpeg",
+                  "specialization" : [{"specialization":"spec - 1"},{"specialization":"spec - 2"},{"specialization":"spec - 3"},{"specialization":"spec - 4"}],
+                  "star_count" : 4 ,
+                  "review_count" : 223
+                },
+                {
+                  "_id":"12345678909865432",
+                  "doctor_name" : "Dr Mohammed imthiyas",
+                  "doctor_img" :"http://mysalveo.com/api/uploads/images.jpeg",
+                  "specialization" : [{"specialization":"spec - 1"},{"specialization":"spec - 2"},{"specialization":"spec - 3"},{"specialization":"spec - 4"}],
+                  "star_count" : 4 ,
+                  "review_count" : 223
+                }
+          ],
+          "Service_details" : 
+          [
+            {
+              "_id":"123456",
+              "service_icon":"http://mysalveo.com/api/uploads/images.jpeg",
+              "service_title":"Bathing",
+              "background_color":"#00FFA2"
+            },
+            {
+              "_id":"123456",
+              "service_icon":"http://mysalveo.com/api/uploads/images.jpeg",
+              "service_title":"Bathing",
+              "background_color":"#00FFA2"
+            },
+            {
+               "_id":"123456",
+              "service_icon":"http://mysalveo.com/api/uploads/images.jpeg",
+              "service_title":"Bathing",
+              "background_color":"#00FFA2"
+            }
+          ],
+           "Products_details" : 
+           [
+                   {
+                    "_id":"1234567890",
+                    "products_img":"http://mysalveo.com/api/uploads/images.jpeg",
+                    "product_title":"Title",
+                    "product_prices" : 200,
+                    "product_offer_status": true,
+                    "product_offer_value": 10,
+                    "product_rate":4.5,
+                    "review_count":123,
+                    "product_fav_status": true
+                   },
+                    {
+                    "_id":"1234567890",
+                    "products_img":"http://mysalveo.com/api/uploads/images.jpeg",
+                    "product_title":"Title",
+                    "product_prices" : 200,
+                    "product_offer_status": false,
+                    "product_offer_value": 0,
+                    "product_rate":4.5,
+                    "review_count":123,
+                    "product_fav_status": false
+                   },
+                   {
+                    "_id":"1234567890",
+                    "products_img":"http://mysalveo.com/api/uploads/images.jpeg",
+                    "product_title":"Title",
+                    "product_prices" : 200,
+                    "product_offer_status": true,
+                    "product_offer_value": 10,
+                    "product_rate":4.5,
+                    "review_count":123,
+                    "product_fav_status": true
+                   },
+                   {
+                    "_id":"1234567890",
+                    "products_img":"http://mysalveo.com/api/uploads/images.jpeg",
+                    "product_title":"Title",
+                    "product_prices" : 200,
+                    "product_offer_status": true,
+                    "product_offer_value": 10,
+                    "product_rate":4.5,
+                    "review_count":123,
+                    "product_fav_status": true
+                   },
+                   {
+                    "_id":"1234567890",
+                    "products_img":"http://mysalveo.com/api/uploads/images.jpeg",
+                    "product_title":"Title",
+                    "product_prices" : 200,
+                    "product_offer_status": false,
+                    "product_offer_value": 0,
+                    "product_rate":4.5,
+                    "review_count":123,
+                    "product_fav_status": false
+                   } 
+          ]
+}

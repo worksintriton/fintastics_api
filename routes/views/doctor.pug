@@ -1,0 +1,168 @@
+doctype html
+head
+  link(rel='stylesheet' href='https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css' integrity='sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z' crossorigin='anonymous')
+  script(src='https://code.jquery.com/jquery-3.5.1.slim.min.js' integrity='sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj' crossorigin='anonymous')
+  script(src='https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js' integrity='sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN' crossorigin='anonymous')
+  script(src='https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js' integrity='sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV' crossorigin='anonymous')
+style.
+  .box-1 {
+  background-color: #fff;
+  border: 1px solid #aaa8a8;
+  }
+  .name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+  font-style: italic;
+  margin: 0px;
+  }
+  p {
+  margin-bottom: 2px;
+  margin-top: 2px;
+  font-size: 13px;
+  }
+  h6 {
+  margin-top: 0px;
+  }
+  .logo {
+  background: #fff;
+  padding: 10px;
+  width: 100px;
+  }
+  .row1 {
+  padding: 10px;
+  background: #009377;
+  }
+  .row1 p {
+  color: #eaeaea;
+  }
+  .row1 p a {
+  font-size: 14px;
+  text-decoration: underline;
+  }
+  .row2 {
+  /* display: -webkit-inline-box; */
+  }
+  .row2 h5 {
+  font-size: 14px;
+  font-weight: 700;
+  }
+  .row2 h5 span {
+  color: #8a8a8a;
+  font-weight: 500;
+  }
+  h3 {
+  font-size: 17px;
+  font-weight: 600;
+  color: #3050ff;
+  margin-top: 30px;
+  }
+  table,
+  th,
+  td {
+  border: 1px solid #ecebeb;
+  border-collapse: collapse;
+  }
+  th,
+  td {
+  padding: 5px;
+  text-align: left;
+  }
+  td {
+  color: #6a6969;
+  }
+  .line-1 {
+  display: -webkit-inline-box;
+  width: 98.3%;
+  }
+  .name-line {
+  width: 70%;
+  }
+  .name-line-2 {
+  width: 30%;
+  }
+section(style='padding: 50px 0px;')
+  .container.box-1
+    .row.row1(style='padding: 10px;')
+      .col-md-7.doc
+        h5.name Dr. #{doctorname}
+        p #{doctorsepecilization}
+      .col-md-5(style='display: flex;')
+        div(style='flex-basis: 70%; ')
+          .power
+            h6(style='font-weight:600;font-size:13px;margin-bottom: 0px;') Powered By:
+            p
+              a www.petpolio.com
+            p(style='font-size:14px') Phone: +91 9876543210
+        div(style='flex-basis: 30%;')
+          img.logo(src='http://54.212.108.156:3000/api/uploads/logo.png' alt='')
+    .row.row2(style='padding: 10px; margin-top: 10px;')
+      .col-md-12
+        hr(style='border-top: 1px solid #3050ff;')
+      .col-md-4
+        h5
+          | Owner&apos;s Name: 
+          span  #{owner_name}
+      .col-md-4
+        h5
+          | Pet Type: 
+          span  #{pet_type}
+      .col-md-4
+        h5
+          | Breed: 
+          span  #{breed}
+      .col-md-4
+        h5
+          | Sex: 
+          span  #{sex}
+      .col-md-4
+        h5
+          | Weight: 
+          span  #{weight}
+      .col-md-4
+        h5
+          | Age: 
+          span  #{age} years
+      .col-md-4
+        h5
+          | Diagnosis: 
+          span  #{diagnosis} years
+      .col-md-4
+        h5
+          | Sub diagnosis: 
+          span  #{sub_diagnosis} years
+      .col-md-12
+        hr(style='border-top: 1px solid #3050ff;')
+    .row.row3(style='padding: 10px')
+      .col-md-12
+        h3 Allegories:
+        table(style='width:100%')
+          // <caption>Monthly savings</caption>
+          tr
+            td
+              | #{allegroies}
+    .row.row3(style='padding: 10px')
+      .col-md-12
+        h3 Prescription:
+        table(style='width:100%')
+          // <caption>Monthly savings</caption>
+          tr
+            th(style='width: 20%;font-size: 14px;color: #919090;text-align:center') Tablet Name
+            th(style='width: 20%;font-size: 14px;color: #919090;text-align:center') Quantity
+            th(style='width: 20%;font-size: 14px;color: #919090;text-align:center') Consumption
+          each n in Prescription_data
+            tr
+               td= n.Tablet_name
+               td= n.Quantity
+               td= n.consumption
+      .col-md-12
+        h3 Doctor comments:
+        table(style='width:100%')
+          // <caption>Monthly savings</caption>
+          tr
+            span  #{doctor_commeents}
+            
+    .row.row1(style='padding: 10px;')
+      .col-md-12.doc(style='text-align:right;')
+        img.logo(src='https://sgp1.digitaloceanspaces.com/quickcompany/trademark/25c298bee64b101a.jpg' style='width: 120px;height: 40px;' alt='')
+        p (DR.#{doctorname})

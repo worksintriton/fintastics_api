@@ -1,0 +1,159 @@
+doctype html
+head
+style.
+  .box-1 {
+  <!-- height: 842px; -->
+  background-color: #fff;
+  border: 1px solid #aaa8a8;
+  <!-- max-width: 900px; -->
+  }
+  .name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+  font-style: italic;
+  margin: 0px;
+  }
+  p {
+  margin-bottom: 2px;
+  margin-top: 2px;
+  font-size: 13px;
+  }
+  h6{
+  margin-top: 0px;
+  }
+  .logo {
+  background: #fff;
+  padding: 10px;
+  }
+  .row1 {
+  padding: 10px;
+  background: #2996bd;
+  }
+  .row1 p {
+  color: #eaeaea;
+  }
+  .row1 p a {
+  font-size: 14px;
+  text-decoration: underline;
+  }
+  .row2{
+  display: -webkit-inline-box;
+  }
+  .row2 h5 {
+  font-size: 14px;
+  font-weight: 600;
+  }
+  .row2 h5 span {
+  color: #1a88b5;
+  }
+  h3 {
+  font-size: 17px;
+  font-weight: 600;
+  color: #000;
+  margin-top: 30px;
+  }
+  table,
+  th,
+  td {
+  border: 1px solid #ecebeb;
+  border-collapse: collapse;
+  }
+  th,
+  td {
+  padding: 5px;
+  text-align: left;
+  }
+  td {
+  color: #6a6969;
+  }
+  .line-1{
+  display: -webkit-inline-box;
+  width: 98.3%;
+  }
+  .name-line{
+  width:70%;
+  }
+  .name-line-2{
+  width:30%;
+  }
+section(style='padding: 50px 0px; margin: 0px 10%;')
+  .container.box-1
+    .row.row1.line-1(style='padding: 10px;')
+      .col-md-7.doc.name-line
+        h5.name Dr. #{doctorname}
+        p #{doctorsepecilization}
+        p KMC Number: #{KMSnumber}
+      .col-md-5.name-line-2(style='display: flex;')
+        div(style='flex-basis: 70%; ')
+          .power
+            h6(style='font-weight:600;font-size:13px;margin-bottom: 0px;') Powered By:
+            p
+              a www.mysalveo.com
+            p
+              a dr@mysalveo.com
+            p(style='font-size:14px') Phone: +91 7892976253
+        div(style='flex-basis: 30%;')
+          img.logo(style='height: 40px;' src='http://mysalveo.com/api/uploads/logo.jpeg' alt='')
+    .row.row2(style='padding: 10px;width: 98%;')
+      .col-md-8(style='width:60%')
+        h5(style='margin: 0px')
+          | Patient Name: 
+          span   #{patientname}
+      .col-md-2(style='padding:2px 10px 2px 2px; text-align:right')
+        h5(style='margin: 0px')
+          | Age: 
+          span   #{patientage}
+      .col-md-2(style='padding:2px 10px 2px 2px;text-align:right')
+        h5(style='margin: 0px')
+          | Sex: 
+          span #{patientgender}
+      .col-md-8(style='padding:2px 10px 2px 2px; text-align:right')
+        h5(style='margin: 0px')
+          | Height: 
+          span  #{patientheight}
+      .col-md-2(style='padding:2px 10px 2px 2px; text-align:right')
+        h5(style='margin: 0px')
+          | Weight: 
+          span  #{patientweight}
+    hr(style='border-top: 1px solid rgb(41, 150, 189);')
+    .row.row3(style='padding: 10px')
+      .col-md-12
+        h3(style='margin:10px 0px') Aliment Details:
+        table(style='width:100%')
+        
+          tr
+            span  #{Problem_info} 
+             
+      .col-md-12
+        h3(style='margin:10px 0px') Past Medications:
+        table(style='width:100%')
+          tr
+            span  #{passed_Medications} 
+            
+      .col-md-12
+        h3(style='margin:10px 0px') Presciption:
+        table(style='width:100%')
+          // <caption>Monthly savings</caption>
+          tr
+            th(style='width: 20%;font-size: 14px;color: #919090;text-align:center') Tablet Name
+            th(style='width: 20%;font-size: 14px;color: #919090;text-align:center') Quantity
+            th(style='width: 20%;font-size: 14px;color: #919090;text-align:center') Consumption
+          
+          each n in Prescription_data
+            tr
+               td= n.Tablet_name
+               td= n.Quantity
+               td= n.consumption
+      .col-md-12
+        h3(style='margin:7px 0px') Any other Instructions:
+        table(style='width:100%')
+          // <caption>Monthly savings</caption>
+          tr
+            span  #{doctor_commeents}
+            
+    .row.row1(style='padding: 10px;')
+      .col-md-12.doc(style='text-align:right;')
+        - var img = dotorsignature
+        img.logo(src=img style='width: 120px;height: 40px;' alt='')
+        p (DR.#{doctorname})
