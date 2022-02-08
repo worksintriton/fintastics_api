@@ -19,7 +19,7 @@ var userdetailsSchema = new mongoose.Schema({
   parent_of: String,
   parent_code : String,
   profile_img : String,
-
+  currency : String
 });
 userdetailsSchema.plugin(timestamps);
 mongoose.model('userdetails', userdetailsSchema);

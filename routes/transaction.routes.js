@@ -8,10 +8,10 @@ var userdetailsModel = require('./../models/userdetailsModel');
 
 
 router.post('/create', async function(req, res) {
-  var system_date = req.body.transaction_date.split(" ");
+  /*var system_date = req.body.transaction_date.split(" ");
   var system_date1 = system_date[0].split("-");
   var final_time = system_date1[2]+"-"+system_date1[1]+"-"+ system_date1[0];
-   system_date = final_time+"T00:00:00.000Z";
+   system_date = final_time+"T00:00:00.000Z";*/
   try{
         await transactionModel.create({
           transaction_date :  req.body.transaction_date,
@@ -22,7 +22,7 @@ router.post('/create', async function(req, res) {
           transaction_amount : req.body.transaction_amount,
           transaction_balance : req.body.transaction_balance,
           transaction_currency_type : req.body.transaction_currency_type || "INR",
-          system_date : system_date,
+          system_date : req.body.transaction_date,
           user_id : req.body.user_id,
           parent_code : req.body.parent_code,
           delete_status : false
@@ -1380,8 +1380,8 @@ router.post('/dashboard/data',async function (req, res) {
     total_count : total_count
    }
    console.log(f);
-   req.body.start_date = req.body.start_date+'T00:00:00.000Z';
-   req.body.end_date = req.body.end_date+'T00:00:00.000Z';
+   req.body.start_date = new Date(req.body.start_date+'T00:00:00.000Z').toISOString();
+   req.body.end_date = new Date(req.body.end_date+'T23:59:59.000Z').toISOString();
    console.log("Dashboard Request",req.body);
    if(req.body.transaction_type == '')
    {

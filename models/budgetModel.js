@@ -4,16 +4,16 @@ const Schema = mongoose.Schema;
 
 var budgetSchema = new mongoose.Schema({  
   budget_title :  String,
-  budget_type : String,
+  //budget_type : String,
   budget_period_type : String,
   budget_amount : Number,
   budget_currency : String,
   budget_cat : Array,
   budget_account :Array,
-  budget_start_date : String,
-  budget_end_date : String,
-  budget_value : Number,
-  budget_head_type : Boolean,
+  budget_start_date : Date,
+  budget_end_date : Date,
+  //budget_value : Number,
+  //budget_head_type : Boolean,
   budget_notification : Boolean,
   delete_status : Boolean,
 });

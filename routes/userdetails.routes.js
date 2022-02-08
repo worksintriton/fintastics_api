@@ -43,6 +43,7 @@ router.post('/create', async function(req, res) {
               parent_code :  result,
               parent_of: req.body.parent_of || "",
               profile_img : req.body.profile_img || "",
+              currency: req.body.currency,
               delete_status : false
         }, 
         function (err, user) {
