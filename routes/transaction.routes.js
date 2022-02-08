@@ -17,9 +17,11 @@ router.post('/create', async function(req, res) {
           transaction_date :  req.body.transaction_date,
           transaction_type : req.body.transaction_type,
           transaction_desc : req.body.transaction_desc,
+          transaction_sub_desc : req.body.transaction_sub_desc,
           transaction_way : req.body.transaction_way,
           transaction_amount : req.body.transaction_amount,
           transaction_balance : req.body.transaction_balance,
+          transaction_currency_type : req.body.transaction_currency_type || "INR",
           system_date : system_date,
           user_id : req.body.user_id,
           parent_code : req.body.parent_code,
@@ -595,6 +597,13 @@ router.post('/movement/report',async function (req, res) {
        total_credit_value = total_debit_value + element.price;
        });
        }
+       total_credit_value = 0;
+       total_debit_value = 0;
+       // console.log(final_data);
+       final_data.forEach(element => {
+        total_credit_value = total_credit_value + element.credeit_amount;
+        total_debit_value =  total_debit_value + element.debit_amount;
+       });
        let values = {
       total_credit_value : total_credit_value,
       total_debit_value : total_debit_value,
@@ -693,6 +702,15 @@ router.post('/movement/report',async function (req, res) {
        total_credit_value = total_credit_value + element.price;
        });
        }
+
+       total_credit_value = 0;
+       total_debit_value = 0;
+       // console.log(final_data);
+       final_data.forEach(element => {
+        total_credit_value = total_credit_value + element.credeit_amount;
+        total_debit_value =  total_debit_value + element.debit_amount;
+       });
+       
       let values = {
       total_credit_value : total_credit_value,
       total_debit_value : total_debit_value,
@@ -710,6 +728,7 @@ router.post('/movement/report',async function (req, res) {
 });
 
 router.post('/transaction/report',async function (req, res) {
+  console.log(req.body);
    var total_credit_value = 0;
    var total_debit_value = 0;
    if(req.body.start_date == '' && req.body.end_date == ''){
@@ -758,7 +777,7 @@ router.post('/transaction/report',async function (req, res) {
        result.forEach(element => {
        if(element._id == final_data[a]._id)
        final_data[a].debit_amount = element.price;
-       total_credit_value = total_credit_value + element.price;
+       total_debit_value = total_debit_value + element.price;
        });
        }
 
@@ -781,9 +800,16 @@ router.post('/transaction/report',async function (req, res) {
        result1.forEach(element => {
        if(element._id == final_data[a]._id)
        final_data[a].credeit_amount = element.price;
-       total_credit_value = total_debit_value + element.price;
+       total_credit_value = total_credit_value + element.price;
        });
        }
+       total_credit_value = 0;
+       total_debit_value = 0;
+       // console.log(final_data);
+       final_data.forEach(element => {
+        total_credit_value = total_credit_value + element.credeit_amount;
+        total_debit_value =  total_debit_value + element.debit_amount;
+       });
        let values = {
       total_credit_value : total_credit_value,
       total_debit_value : total_debit_value,
@@ -882,6 +908,16 @@ router.post('/transaction/report',async function (req, res) {
        total_credit_value = total_credit_value + element.price;
        });
        }
+
+       total_credit_value = 0;
+       total_debit_value = 0;
+       // console.log(final_data);
+       final_data.forEach(element => {
+        total_credit_value = total_credit_value + element.credeit_amount;
+        total_debit_value =  total_debit_value + element.debit_amount;
+       });
+
+
       let values = {
       total_credit_value : total_credit_value,
       total_debit_value : total_debit_value,
@@ -974,6 +1010,16 @@ router.post('/income/report',async function (req, res) {
        total_credit_value = total_debit_value + element.price;
        });
        }
+
+       total_credit_value = 0;
+       total_debit_value = 0;
+       // console.log(final_data);
+       final_data.forEach(element => {
+        total_credit_value = total_credit_value + element.credeit_amount;
+        total_debit_value =  total_debit_value + element.debit_amount;
+       });
+
+
        let values = {
       total_credit_value : total_credit_value,
       total_debit_value : total_debit_value,
@@ -1072,6 +1118,13 @@ router.post('/income/report',async function (req, res) {
        total_credit_value = total_credit_value + element.price;
        });
        }
+       total_credit_value = 0;
+       total_debit_value = 0;
+       // console.log(final_data);
+       final_data.forEach(element => {
+        total_credit_value = total_credit_value + element.credeit_amount;
+        total_debit_value =  total_debit_value + element.debit_amount;
+       });
       let values = {
       total_credit_value : total_credit_value,
       total_debit_value : total_debit_value,
@@ -1091,6 +1144,7 @@ router.post('/income/report',async function (req, res) {
 
 
 router.post('/expenditure/report',async function (req, res) {
+   console.log('Expend',req.body);
    var total_credit_value = 0;
    var total_debit_value = 0;
    if(req.body.start_date == '' && req.body.end_date == ''){
@@ -1119,7 +1173,7 @@ router.post('/expenditure/report',async function (req, res) {
       }
     }
   );
-
+  // console.log('Test 1');
   transactionModel.aggregate([
     {$match: {user_id: req.body.user_id,transaction_way: "Debit"}
     },
@@ -1139,10 +1193,10 @@ router.post('/expenditure/report',async function (req, res) {
        result.forEach(element => {
        if(element._id == final_data[a]._id)
        final_data[a].debit_amount = element.price;
-       total_credit_value = total_credit_value + element.price;
        });
        }
-
+    // console.log(total_debit_value);
+    // console.log('Test 2');
     transactionModel.aggregate([
     {$match: {user_id: req.body.user_id,transaction_way: "Credit"}
     },
@@ -1157,22 +1211,35 @@ router.post('/expenditure/report',async function (req, res) {
       if (err) {
         res.send(err);
       } else {
-        console.log(result1);
+        // console.log(result1);
        for(let a = 0; a < final_data.length; a++){
        result1.forEach(element => {
        if(element._id == final_data[a]._id)
        final_data[a].credeit_amount = element.price;
-       total_credit_value = total_debit_value + element.price;
        });
        }
+       total_credit_value = 0;
+       total_debit_value = 0;
+       // console.log(final_data);
+       final_data.forEach(element => {
+        total_credit_value = total_credit_value + element.credeit_amount;
+        total_debit_value =  total_debit_value + element.debit_amount;
+       });
        let values = {
       total_credit_value : total_credit_value,
       total_debit_value : total_debit_value,
       available_balance : total_credit_value - total_debit_value
       } 
+       // console.log('Test 3',values);
       res.json({Status:"Success",Message:"Expenditure Data", Data : final_data,total_count : values,Code:200});     
       }
     }
+
+    
+
+
+
+
   );
       }
     }
@@ -1263,6 +1330,13 @@ router.post('/expenditure/report',async function (req, res) {
        total_credit_value = total_credit_value + element.price;
        });
        }
+       total_credit_value = 0;
+       total_debit_value = 0;
+       // console.log(final_data);
+       final_data.forEach(element => {
+        total_credit_value = total_credit_value + element.credeit_amount;
+        total_debit_value =  total_debit_value + element.debit_amount;
+       });
       let values = {
       total_credit_value : total_credit_value,
       total_debit_value : total_debit_value,
@@ -1412,6 +1486,8 @@ router.post('/accountsummery/data',async function (req, res) {
     Debit_amount : fin_debit,
     Balance_amount : fin_credit - fin_debit,
     }
+    console.log(c,Credit_amount,f);
+
    res.json({Status:"Success",Message:"account summery  data", Data : Credit_amount , balance : c , user_count : f ,Code:200});
 });
 
@@ -1421,6 +1497,26 @@ router.get('/getlist', function (req, res) {
           res.json({Status:"Success",Message:"transaction Details", Data : Functiondetails ,Code:200});
         });
 });
+
+
+
+router.get('/getlist_update', function (req, res) {
+        transactionModel.find({},async function (err, Functiondetails) {
+         for(let a = 0 ; a < Functiondetails.length; a++){
+          let dd = {
+              transaction_currency_type : "INR"
+          }
+         transactionModel.findByIdAndUpdate(Functiondetails[a]._id, dd, {new: true}, function (err, UpdatedDetails) {
+            if (err) return res.json({Status:"Failed",Message:"Internal Server Error", Data : {},Code:500});
+             // res.json({Status:"Success",Message:"transaction Updated", Data : UpdatedDetails ,Code:200});
+        });
+         if(a == Functiondetails.length - 1){
+          res.json({Status:"Success",Message:"transaction Details", Data : {} ,Code:200});
+         }
+         } 
+        });
+});
+
 
 
 router.post('/edit', function (req, res) {
@@ -1436,5 +1532,47 @@ router.post('/delete', function (req, res) {
           res.json({Status:"Success",Message:"transaction Deleted successfully", Data : {} ,Code:200});
       });
 });
+
+
+////Mani/////
+
+
+
+router.post('/getFilterDatas', function (req, res) {
+  console.log("req.body",req.body);
+
+  var startDate = new Date(req.body.data.startDate);
+  var endDate = new Date(req.body.data.endDate);
+  if (new Date() == startDate) {
+      startDate.setDate(startDate.getDate());
+      endDate.setDate(endDate.getDate());
+  }else{
+    startDate.setDate(startDate.getDate() );
+    endDate.setDate(endDate.getDate() + 1);
+  }
+  console.log("startDate",startDate);
+  console.log("endDate",endDate);
+  matchQuery = { $and: [{ createdAt: { $gte: startDate.toISOString() } }, { createdAt: { $lte: endDate.toISOString() } }] };
+ 
+  transactionModel.aggregate(
+      [
+        {
+          $match: matchQuery
+  
+      },
+      ],
+      function (err, data) {
+        if (err) {
+          return commonUtil.makeErrorResponse(res, err, "", "");
+        } else {
+          res.json({Status:"Success",Message:"Payment Type Filter Datas List", Data : data ,Code:200});
+        }
+      }
+    );
+});
+
+
+
+
 
 module.exports = router;

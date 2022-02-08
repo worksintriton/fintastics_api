@@ -56,6 +56,22 @@ catch(e){
 });
 
 
+router.post('/authenticate', async function(req, res) {
+  var user_email = req.body.email;
+  var password = req.body.password;
+   console.log("user_email ",user_email, "password", password)
+  const userData = await userdetailsModel.findOne({user_email : user_email, password: password, roll_type: "SuperAdmin"});
+  console.log("userData",userData) 
+  if(userData){
+        res.json({Status:"Success",Message:"Successfully loggin",Data : userData , Code:200});  
+          console.log("userData ",userData);
+      }else{
+        res.json({Status:"Failed",Message:"user_email or password incorrect", Data : {Message:"user_email or password incorrect"},Code:500});
+      }
+     
+});
+
+
 
 router.post('/check_parent_code',async function (req, res) {
       let phone  =  await userdetailsModel.findOne({parent_code : req.body.parent_code});
@@ -101,6 +117,8 @@ router.put('/update/:id', function (req, res) {
 
 
 router.post('/send/emailotp',async function (req, res) {
+  let email_detail  =  await userdetailsModel.findOne({user_email : req.body.user_email});
+  if(email_detail == null){
   var randomChars = '0123456789';
           var result = '';
           for ( var i = 0; i < 6; i++ ) {
@@ -113,13 +131,13 @@ router.post('/send/emailotp',async function (req, res) {
   service: 'gmail',
   host: 'smtp.gmail.com',
   auth: {
-    user: 'carpeinfinitus@gmail.com',
-    pass: 'Petfolio!@#$%3'
+    user: 'thinkinghatstech@gmail.com',
+    pass: 'Pass@2021'
   }
 });
 
 var mailOptions = {
-  from: 'carpeinfinitus@gmail.com',
+  from: 'thinkinghatstech@gmail.com',
   to: req.body.user_email,
   subject: "Email verification OTP",
   text: "Hi, Your OTP is " + random + ". Petfolio OTP for Signup."
@@ -128,13 +146,18 @@ var mailOptions = {
 transporter.sendMail(mailOptions, function(error, info){
   if (error) {
     console.log(error);
+    res.json({Status:"Failed",Message:error.response,Data : {} , Code:404}); 
   } else {
-    res.json({Status:"Success",Message:"Eamil id sent successfully",Data : {
+    res.json({Status:"Success",Message:"OTP Sent To Your Eamil Id",Data : {
       'email_id': req.body.user_email,
       'otp' : random
     } , Code:200}); 
   }
 });
+  }
+  else{
+     res.json({Status:"Failed",Message:"This email id already exist",Data : {} , Code:404}); 
+  }
 });
 
 
@@ -350,5 +373,80 @@ router.post('/admin_delete', function (req, res) {
       });
 });
 
+
+
+//////Mani code//////
+
+
+router.post('/getChildFilterDatas', function (req, res) {
+  console.log("req.body",req.body);
+  var startDate = new Date(req.body.data.startDate);
+  var endDate = new Date(req.body.data.endDate);
+  if (new Date() == startDate) {
+      startDate.setDate(startDate.getDate());
+      endDate.setDate(endDate.getDate());
+  }else{
+    startDate.setDate(startDate.getDate() );
+    endDate.setDate(endDate.getDate() + 1);
+  }
+  console.log("startDate",startDate);
+  console.log("endDate",endDate);
+  matchQuery = { $and: [{ createdAt: { $gte: startDate.toISOString() } }, { createdAt: { $lte: endDate.toISOString() } }]};
+  matchQuery['parent_of'] = req.body.parent_of;
+  userdetailsModel.aggregate(
+      [
+        {
+          $match: matchQuery
+  
+      },
+      ],
+      function (err, data) {
+        if (err) {
+          return commonUtil.makeErrorResponse(res, err, "", "");
+        } else {
+          res.json({Status:"Success",Message:"Payment Type Filter Datas List", Data : data ,Code:200});
+        }
+      }
+    );
+});
+
+router.post('/getFilterDatas', function (req, res) {
+  console.log("req.body",req.body);
+
+  var startDate = new Date(req.body.data.startDate);
+  var endDate = new Date(req.body.data.endDate);
+  if (new Date() == startDate) {
+      startDate.setDate(startDate.getDate());
+      endDate.setDate(endDate.getDate());
+  }else{
+    startDate.setDate(startDate.getDate() );
+    endDate.setDate(endDate.getDate() + 1);
+  }
+  console.log("startDate",startDate);
+  console.log("endDate",endDate);
+  matchQuery = { $and: [{ createdAt: { $gte: startDate.toISOString() } }, { createdAt: { $lte: endDate.toISOString() } }] };
+ 
+  userdetailsModel.aggregate(
+      [
+        {
+          $match: matchQuery
+  
+      },
+      ],
+      function (err, data) {
+        if (err) {
+          return commonUtil.makeErrorResponse(res, err, "", "");
+        } else {
+          res.json({Status:"Success",Message:"Payment Type Filter Datas List", Data : data ,Code:200});
+        }
+      }
+    );
+});
+
+
+
+
+
+///test
 
 module.exports = router;

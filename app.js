@@ -32,6 +32,11 @@ var transaction = require('./routes/transaction.routes');
 
 var desc_type = require('./routes/desc_type.routes');
 
+var sub_desc_type = require('./routes/sub_desc_type.routes');
+
+var budget = require('./routes/budget.routes');
+
+var currency = require('./routes/currency.routes');
 
 
 
@@ -39,7 +44,7 @@ var desc_type = require('./routes/desc_type.routes');
 
 var BaseUrl = "http://52.24.145.80:3000/api"; 
 const mongoose = require('mongoose'); 
-mongoose.connect('mongodb://localhost:27017/Salveo'); 
+mongoose.connect('mongodb://localhost:27017/fintastics'); 
 var db = mongoose.connection; 
 db.on('error', console.log.bind(console, "connection error")); 
 db.once('open', function(callback){ 
@@ -162,7 +167,11 @@ app.use('/api/transaction', transaction);
 
 app.use('/api/desc_type', desc_type);
 
+app.use('/api/sub_desc_type', sub_desc_type);
 
+app.use('/api/budget', budget);
+
+app.use('/api/currency', currency);
 
 
 // catch 404 and forward to error handler
@@ -173,6 +182,7 @@ app.use(function(req, res, next) {
 // error handler
 app.use(function(err, req, res, next) {
   // set locals, only providing error in development
+  console.log(err.message);
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
 
@@ -180,8 +190,5 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
-
-
-//Mani testing
 
 module.exports = app;
