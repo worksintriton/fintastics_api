@@ -12,7 +12,8 @@ router.post('/create', async function(req, res) {
             desc_type_id : req.body.desc_type_id,
             sub_desc_type : req.body.sub_desc_type,
             date_and_time: req.body.date_and_time,
-            delete_status : false
+            delete_status : false,
+            icon: req.body.icon
         }, 
         function (err, user) {
           console.log(user)

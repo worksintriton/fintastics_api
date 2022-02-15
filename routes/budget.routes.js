@@ -4,24 +4,26 @@ var bodyParser = require('body-parser');
 router.use(bodyParser.urlencoded({ extended: false }));
 router.use(bodyParser.json());
 var budgetModel = require('./../models/budgetModel');
+const transactionModel = require('../models/transactionModel');
 
 
 router.post('/create', async function (req, res) {
   try {
     await budgetModel.create({
+      budget_userid: req.body.budget_userid,
       budget_title: req.body.budget_title,
       budget_type: req.body.budget_type,
       budget_period_type: req.body.budget_period_type,
       budget_amount: req.body.budget_amount,
       budget_currency: req.body.budget_currency,
-      budget_cat: req.body.budget_cat,
-      budget_account: req.body.budget_account,
+      budget_cat: req.body['budget_cat[]'],
+      budget_account: req.body['budget_account[]'],
       budget_start_date: req.body.budget_start_date,
       budget_end_date: req.body.budget_end_date,
       budget_value: req.body.budget_value,
       budget_head_type: req.body.budget_head_type,
       budget_notification: req.body.budget_notification,
-      delete_status: false
+      delete_status: false,
     },
       function (err, budget) {
         console.log(budget)
@@ -51,29 +53,96 @@ router.post('/getlist_id', function (req, res) {
 
 
 router.get('/getlist', function (req, res) {
-  let skip = 0, limit = 10;
-  let params = { delete_status: false };
-  if (req.query.skip) {
-    skip = parseInt(req.query.skip);
-  }
-  if (req.query.limit) {
-    limit = parseInt(req.query.limit);
-  }
-  if (req.query.status) {
-    if (req.query.status === 'Active') {
-      //params.budget_start_date = { $lte: new Date().toISOString() }
-      params.budget_end_date = { $gte: new Date().toISOString() }
+  try {
+    let skip = 0, limit = 10;
+    let params = { delete_status: false };
+    if (req.query.skip) {
+      skip = parseInt(req.query.skip);
     }
-    else if (req.query.status === 'Closed') {
-      params.budget_end_date = { $lte: new Date().toISOString() }
+    if (req.query.limit) {
+      limit = parseInt(req.query.limit);
     }
+    if (req.query.status) {
+      if (req.query.status === 'Active') {
+        //params.budget_start_date = { $lte: new Date().toISOString() }
+        params.budget_end_date = { $gte: new Date() }
+      }
+      else if (req.query.status === 'Closed') {
+        params.budget_end_date = { $lte: new Date() }
+      }
+    }
+    if (req.query.period_type) {
+      params.budget_period_type = req.query.period_type;
+    }
+    if (req.query.userid) {
+      params.budget_userid = req.query.userid;
+    }
+    //let trans_params = { delete_status: false, transaction_way: 'Debit1' };
+    let aggr_params = [{ "$match": params }, { "$unset": ["createdAt", "updatedAt", "delete_status"] },
+    { "$addFields": { "totalExpense": 0 } }];
+    if (skip > 0) {
+      aggr_params.push({ "$skip": skip });
+    }
+    if (limit > 0) {
+      aggr_params.push({ "$limit": limit });
+    }
+
+    /*{
+       '$lookup': {
+         'from': 'transactions',
+         'localField': '_id',
+         'foreignField': 'transaction_budget_id',
+         'as': 'transactions',
+         'let': { 'transaction_amount': "$transaction_amount" },
+         'pipeline': [
+           {
+             '$match': { trans_params }
+           }
+         ]
+       }
+     },
+     { '$unwind': '$transactions' },
+     {
+       '$group': {
+         '_id': '$_id',
+         'detail': { $first: '$$ROOT' },
+         'totalExpense': { '$sum': "$transaction_amount" }
+       },
+     },
+     {
+       $replaceRoot: {
+         newRoot: { $mergeObjects: [{ totalExpense: '$totalExpense' }, '$detail'] },
+       },
+     }*/
+
+    budgetModel.aggregate(aggr_params).exec(async function (err, budget_list) {
+      let budget_list_id = budget_list.map(x => { return String(x._id) });
+      let trans_params = { delete_status: false, transaction_budget_id: { $in: budget_list_id }, transaction_way: 'Debit' }
+      await transactionModel.aggregate([
+        {
+          "$match": trans_params
+        },
+        {
+          "$group": {
+            "_id": "$transaction_budget_id",
+            "totalExpense": { "$sum": "$transaction_amount" }
+          }
+        }
+      ]).exec(function (trans_err, transaction_list) {
+        if (trans_err) { console.log(trans_err); return false; }
+        transaction_list.forEach(x => {
+          let filter = budget_list.filter(x1 => String(x1._id) === String(x._id));
+          if (filter.length > 0) {
+            filter[0]['totalExpense'] = x["totalExpense"];
+          }
+        });
+        res.json({ Status: "Success", Message: "Budget Details", Data: budget_list, Code: 200 });
+      });
+    });
   }
-  if (req.query.period_type) {
-    params.budget_period_type = req.query.period_type;
+  catch (ex) {
+    res.json({ Status: "Failure", Error: ex.message, Code: 400 });
   }
-  budgetModel.find(params, {}, { skip: skip, limit: limit }, function (err, budget_list) {
-    res.json({ Status: "Success", Message: "Budget Details", Data: budget_list, Code: 200 });
-  });
 });
 
 
@@ -128,7 +197,13 @@ router.post('/getFilterDatas', function (req, res) {
   );
 });
 
-
+router.get('/years', function (req, res) {
+  let years = [];
+  for (let i = 2022; i < 2030; i++) {
+    years.push(i);
+  }
+  res.send({ Status: "Success", Message: "Years List", Data: years, Code: 200 });
+});
 
 
 module.exports = router;
