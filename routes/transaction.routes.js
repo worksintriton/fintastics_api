@@ -25,8 +25,9 @@ router.post('/create', async function(req, res) {
           system_date : req.body.transaction_date,
           user_id : req.body.user_id,
           parent_code : req.body.parent_code,
-          delete_status : false
-        }, 
+          delete_status : false,
+          transaction_budget_id: req.body.transaction_budget_id
+        },
         function (err, user) {
           console.log(user)
           console.log(err);

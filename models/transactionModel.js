@@ -15,6 +15,7 @@ var transactionSchema = new mongoose.Schema({
   user_id : String,
   parent_code : String,
   delete_status : Boolean,
+  transaction_budget_id: String
 });
 transactionSchema.plugin(timestamps);
 mongoose.model('transaction', transactionSchema);
