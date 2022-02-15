@@ -16,6 +16,7 @@ var budgetSchema = new mongoose.Schema({
   //budget_head_type : Boolean,
   budget_notification : Boolean,
   delete_status : Boolean,
+  budget_userid: String
 });
 budgetSchema.plugin(timestamps);
 mongoose.model('budget', budgetSchema);
