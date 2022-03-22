@@ -8,6 +8,8 @@ var notificationSchema = new mongoose.Schema({
   notify_descri : String,
   notify_img : String,
   notify_time : String,
+  notify_status: String,
+  notify_color: String,
   date_and_time : String,
   delete_status : Boolean,
 });

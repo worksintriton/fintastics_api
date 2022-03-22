@@ -5,6 +5,7 @@ router.use(bodyParser.urlencoded({ extended: false }));
 router.use(bodyParser.json());
 var desc_typeModel = require('./../models/desc_typeModel');
 var sub_desc_typeModel = require('./../models/sub_desc_typeModel');
+const budgetModel = require('../models/budgetModel');
 
 router.post('/create', async function (req, res) {
   try {
@@ -88,16 +89,42 @@ router.get('/getlist', function (req, res) {
         as: 'sub_desc_types',
       }
     },
-  {
-    $project:{
-      _id:1,
-      desc_type:1,
-      "sub_desc_types._id":1,
-      "sub_desc_types._sub_desc_type":1
-    }
-  }], function (err, desc_type_list) {
+    {
+      $project: {
+        _id: 1,
+        desc_type: 1,
+        "sub_desc_types._id": 1,
+        "sub_desc_types._sub_desc_type": 1
+      }
+    }], function (err, desc_type_list) {
       res.json({ Status: "Success", Message: "desc type Details", Data: desc_type_list, Code: 200 });
     });
+});
+
+router.post('/getlist_of_budget', function (req, res) {
+  let params = { delete_status: false };
+  if (req.body.budget_id && req.body.budget_id != "") {
+    budgetModel.find({ _id: req.body.budget_id }, function (err, desc_type_list) {
+      if (err) {
+        res.json({ Status: "Failed", Message: err.message, Code: 400 });
+      }
+      let desc_type = [];
+      desc_type_list.forEach(x => {
+        x.budget_cat.forEach(cat => {
+          desc_type.push({ _id: cat.id, desc_type: cat.name });
+        });
+      })
+      res.json({ Status: "Success", Message: "desc type Details", Data: desc_type, Code: 200 });
+    });
+  }
+  else {
+    desc_typeModel.find({}, { desc_type: 1 }, {}, function (err, desc_type_list) {
+      if (err) {
+        res.json({ Status: "Failed", Message: err.message, Code: 400 });
+      }
+      res.json({ Status: "Success", Message: "desc type Details", Data: desc_type_list, Code: 200 });
+    });
+  }
 });
 
 

@@ -4,6 +4,7 @@ const Schema = mongoose.Schema;
 
 var currencySchema = new mongoose.Schema({
   currency: String,
+  symbol: String,
   date_and_time: String,
   delete_status: Boolean,
 });

@@ -8,6 +8,7 @@ var budgetSchema = new mongoose.Schema({
   budget_period_type : String,
   budget_amount : Number,
   budget_currency : String,
+  budget_currency_symbol: String,
   budget_cat : Array,
   budget_account :Array,
   budget_start_date : Date,
@@ -16,7 +17,9 @@ var budgetSchema = new mongoose.Schema({
   //budget_head_type : Boolean,
   budget_notification : Boolean,
   delete_status : Boolean,
-  budget_userid: String
+  budget_userid: String,
+  budget_cat_all : Boolean,
+  budget_account_all : Boolean
 });
 budgetSchema.plugin(timestamps);
 mongoose.model('budget', budgetSchema);

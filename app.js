@@ -38,11 +38,13 @@ var budget = require('./routes/budget.routes');
 
 var currency = require('./routes/currency.routes');
 
+var subscription = require('./routes/subscription.routes');
 
+var userSubscription = require('./routes/userSubscription.routes');
 
 /*Database connectivity*/
 
-var BaseUrl = "http://52.24.145.80:3000/api"; 
+var BaseUrl = "http://35.88.62.26:3000/api"; 
 const mongoose = require('mongoose'); 
 mongoose.connect('mongodb://localhost:27017/fintastics'); 
 var db = mongoose.connection; 
@@ -151,7 +153,6 @@ app.use(cookieParser());
 app.use('/api/', express.static(path.join(__dirname, 'public')));
 app.use('/api/', express.static(path.join(__dirname, 'routes')));
 
-
 app.use('/api/activity', Activity);
 
 app.use('/api/userdetails', userdetails);
@@ -172,6 +173,10 @@ app.use('/api/sub_desc_type', sub_desc_type);
 app.use('/api/budget', budget);
 
 app.use('/api/currency', currency);
+
+app.use('/api/subscription', subscription);
+
+app.use('/api/usersubscription', userSubscription);
 
 
 // catch 404 and forward to error handler

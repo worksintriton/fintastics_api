@@ -11,6 +11,7 @@ var transactionSchema = new mongoose.Schema({
   transaction_amount : Number,
   transaction_balance : Number,
   transaction_currency_type : String,
+  transaction_currency_symbol: String,
   system_date : Date,
   user_id : String,
   parent_code : String,

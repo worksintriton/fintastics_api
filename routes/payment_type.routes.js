@@ -41,7 +41,7 @@ router.post('/getlist_id', function (req, res) {
 
 router.get('/getlist', async function (req, res) {
   let desc_type_list = await desc_typeModel.find({ delete_status: false }).select({ _id: 1, desc_type: 1 });
-  let currency_list = await currencyModel.find({ delete_status: false }).select({_id: 1, currency: 1});
+  let currency_list = await currencyModel.find({ delete_status: false }).select({_id: 1, currency: 1, symbol: 1});
   payment_typeModel.find({ delete_status: false }, function (err, payment_type_list) {
     res.json({ Status: "Success", Message: "payment type Details", Data: { "payment_types": payment_type_list, "desc_types": desc_type_list, "currencies": currency_list }, Code: 200 });
   }).select({ _id: 1, payment_type: 1 });

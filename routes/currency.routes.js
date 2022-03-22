@@ -9,6 +9,7 @@ router.post('/create', async function (req, res) {
   try {
     await currencyModel.create({
       currency: req.body.currency,
+      symbol: req.body.symbol,
       date_and_time: req.body.date_and_time,
       delete_status: false
     },
@@ -32,16 +33,16 @@ router.get('/deletes', function (req, res) {
 
 
 router.post('/getlist_id', function (req, res) {
-  currencyModel.find({ Person_id: req.body.Person_id, delete_status: false }, function (err, StateList) {
-    res.json({ Status: "Success", Message: "Currency List", Data: StateList, Code: 200 });
+  currencyModel.find({ Person_id: req.body.Person_id, delete_status: false }, function (err, resultList) {
+    res.json({ Status: "Success", Message: "Currency List", Data: resultList, Code: 200 });
   });
 });
 
 
 
 router.get('/getlist', function (req, res) {
-  currencyModel.find({ delete_status: false }, function (err, Functiondetails) {
-    res.json({ Status: "Success", Message: "Currency Details", Data: Functiondetails.map(x => { return {id:x.id, currency:x.currency } }), Code: 200 });
+  currencyModel.find({ delete_status: false }, function (err, resultList) {
+    res.json({ Status: "Success", Message: "Currency Details", Data: resultList.map(x => { return {id:x.id, currency:x.currency, symbol: x.symbol } }), Code: 200 });
   });
 });
 
