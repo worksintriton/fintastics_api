@@ -102,18 +102,15 @@ router.get('/getlist', function (req, res) {
 });
 
 router.post('/getlist_of_budget', function (req, res) {
-  let params = { delete_status: false };
   if (req.body.budget_id && req.body.budget_id != "") {
-    budgetModel.find({ _id: req.body.budget_id }, function (err, desc_type_list) {
+    budgetModel.findByIdAndDelete(req.body.budget_id, function (err, budget) {
       if (err) {
         res.json({ Status: "Failed", Message: err.message, Code: 400 });
       }
       let desc_type = [];
-      desc_type_list.forEach(x => {
-        x.budget_cat.forEach(cat => {
-          desc_type.push({ _id: cat.id, desc_type: cat.name });
-        });
-      })
+      x.budget_cat.forEach(cat => {
+        desc_type.push({ _id: cat.id, desc_type: cat.name });
+      });
       res.json({ Status: "Success", Message: "desc type Details", Data: desc_type, Code: 200 });
     });
   }

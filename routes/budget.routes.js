@@ -73,8 +73,6 @@ router.post('/getlist_id', function (req, res) {
   });
 });
 
-
-
 router.get('/getlist', async function (req, res) {
   try {
     let skip = 0, limit = 10, timezone = "+0530";
@@ -87,7 +85,12 @@ router.get('/getlist', async function (req, res) {
           year: { $year: { date: "$budget_start_date", timezone: timezone } },
           month: { $month: { date: "$budget_start_date", timezone: timezone } },
           week: { $week: { date: "$budget_start_date", timezone: timezone } },
-          month_week: { $add: [1, { $floor: { $divide: [{ $dayOfMonth: "$budget_start_date" }, 7] } }] }
+          /*month_week: { $add: [1, { $floor: { $divide: [{ $dayOfMonth: "$budget_start_date" }, 7] } }] },
+          day_of_week: { $subtract: [{ $dayOfWeek: { date: "$budget_start_date", timezone: timezone } }, 1] },
+          day_of_month: { $dayOfMonth: { date: "$budget_start_date", timezone: timezone } },
+          mod1: { $mod: [{ $add: [{ $subtract: [{ $dayOfWeek: { date: "$budget_start_date", timezone: timezone } }, 1] }, 7] }, 7] },
+          sub1: { $subtract: [{ $dayOfMonth: { date: "$budget_start_date", timezone: timezone } }, { $mod: [{ $add: [{ $dayOfWeek: { date: "$budget_start_date", timezone: timezone } }, 7] }, 7] }] },*/
+          month_week: { $add: [{ $ceil: { $divide: [{ $subtract: [{ $dayOfMonth: { date: "$budget_start_date", timezone: timezone } }, { $mod: [{ $add: [{ $subtract: [{ $dayOfWeek: { date: "$budget_start_date", timezone: timezone } }, 1] }, 7] }, 7] }] }, 7] } }, 1] }
         }
       }];
     if (req.query.skip) {
@@ -175,10 +178,13 @@ router.get('/getlist', async function (req, res) {
     if (limit > 0) {
       aggr_params.push({ "$limit": limit });
     }
+    aggr_params.push({ '$sort': { '_id': -1 } });
     budgetModel.aggregate(aggr_params).exec(async function (err, budget_list) {
       if (err) { console.log(err); res.json({ Status: "Failure", Error: err.message, Code: 400 }); }
       budget_list.forEach(x => {
         x.transactions.forEach(x1 => {
+          x1.transaction_date = new Date(x1.transaction_date).toLocaleDateString("en-CA") + " " + new Date(x1.transaction_date).toLocaleTimeString("en-US", { hour: '2-digit', minute: '2-digit' });
+          x1.createdAt = new Date(x1.createdAt).toLocaleDateString("en-CA") + " " + new Date(x1.createdAt).toLocaleTimeString("en-US", { hour: '2-digit', minute: '2-digit' });
           x.totalExpense += x1.transaction_amount;
         });
         if (!req.query.with_transactions || req.query.with_transactions === 'false') {
@@ -328,7 +334,8 @@ router.post("/budget_graph", async function (req, res) {
       case "Annually":
         if (budget_start_date < budget_end_date) {
           while (budget_start_date <= budget_end_date) {
-            bottom_list.push(String(budget_start_date.getMonth() + 1));
+            //bottom_list.push(String(budget_start_date.getMonth() + 1));
+            bottom_list.push(budget_start_date.toLocaleDateString("en-US", { month: 'short' }));
             result.push([]);
             budget_start_date.setMonth(budget_start_date.getMonth() + 1);
           }

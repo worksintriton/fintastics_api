@@ -6,6 +6,7 @@ router.use(bodyParser.json());
 var payment_typeModel = require('./../models/payment_typeModel');
 var desc_typeModel = require('./../models/desc_typeModel');
 var currencyModel = require('./../models/currencyModel');
+const budgetModel = require('../models/budgetModel');
 
 router.post('/create', async function (req, res) {
   try {
@@ -46,6 +47,32 @@ router.get('/getlist', async function (req, res) {
     res.json({ Status: "Success", Message: "payment type Details", Data: { "payment_types": payment_type_list, "desc_types": desc_type_list, "currencies": currency_list }, Code: 200 });
   }).select({ _id: 1, payment_type: 1 });
 });
+
+router.post('/getlist_of_budget', function (req, res) {
+  if (req.body.budget_id && req.body.budget_id != "") {
+    budgetModel.find({ _id: req.body.budget_id, delete_status:false }, function (err, budget_list) {
+      if (err) {
+        res.json({ Status: "Failed", Message: err.message, Code: 400 });
+      }
+      let payment_type = [];
+      budget_list.forEach(x => {
+        x.budget_account.forEach(acc => {
+          payment_type.push({ _id: acc.id, payment_type: acc.name });
+        });
+      })
+      res.json({ Status: "Success", Message: "payment type Details", Data: payment_type, Code: 200 });
+    });
+  }
+  else {
+    payment_typeModel.find({}, { payment_type: 1 }, {}, function (err, payment_type_list) {
+      if (err) {
+        res.json({ Status: "Failed", Message: err.message, Code: 400 });
+      }
+      res.json({ Status: "Success", Message: "payment type Details", Data: payment_type_list, Code: 200 });
+    });
+  }
+});
+
 
 router.post('/edit', function (req, res) {
   payment_typeModel.findByIdAndUpdate(req.body._id, req.body, { new: true }, function (err, UpdatedDetails) {

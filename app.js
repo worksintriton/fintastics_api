@@ -3,18 +3,18 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
-var bodyParser = require('body-parser');	
+var bodyParser = require('body-parser');
 var fileUpload = require('express-fileupload');
 var pdf = require('html-pdf');
 const puppeteer = require('puppeteer');
 const { v4: uuidv4 } = require('uuid');
 const moment = require('moment');
 var fs = require('fs');
-var pug = require ('pug');
+var pug = require('pug');
 var request = require("request");
 var userdetailsModel = require('./models/userdetailsModel');
 var responseMiddleware = require('./middlewares/response.middleware');
-
+const transactionModel = require('./models/transactionModel');
 /*Routing*/
 
 var Activity = require('./routes/Activity.routes');
@@ -23,7 +23,7 @@ var userdetails = require('./routes/userdetails.routes');
 
 var notification = require('./routes/notification.routes');
 
-var dashboard_details= require("./routes/dashboard_details");
+var dashboard_details = require("./routes/dashboard_details");
 
 var payment_type = require('./routes/payment_type.routes');
 
@@ -44,14 +44,15 @@ var userSubscription = require('./routes/userSubscription.routes');
 
 /*Database connectivity*/
 
-var BaseUrl = "http://35.88.62.26:3000/api"; 
-const mongoose = require('mongoose'); 
-mongoose.connect('mongodb://localhost:27017/fintastics'); 
-var db = mongoose.connection; 
-db.on('error', console.log.bind(console, "connection error")); 
-db.once('open', function(callback){ 
-    console.log("connection succeeded"); 
-}) 
+BaseUrl = "http://35.88.62.26:3000/api";
+const mongoose = require('mongoose');
+const budgetModel = require('./models/budgetModel');
+mongoose.connect('mongodb://localhost:27017/fintastics');
+var db = mongoose.connection;
+db.on('error', console.log.bind(console, "connection error"));
+db.once('open', function (callback) {
+  console.log("connection succeeded");
+})
 
 var app = express();
 
@@ -78,12 +79,12 @@ app.use((req, res, next) => {
 
 
 
-app.post('/upload', function(req, res) {
+app.post('/upload', function (req, res) {
   let sampleFile;
   let uploadPath;
 
   if (!req.files || Object.keys(req.files).length === 0) {
-    res.error(300,'No files were uploaded.');
+    res.error(300, 'No files were uploaded.');
     return;
   }
 
@@ -96,29 +97,29 @@ app.post('/upload', function(req, res) {
 
 
 
-  uploadPath = __dirname + '/public/uploads/'  + new Date().getTime() + "." + filetype;
+  uploadPath = __dirname + '/public/uploads/' + new Date().getTime() + "." + filetype;
 
-  var Finalpath = '/uploads/'+ new Date().getTime() + "." + filetype;
-   console.log("uploaded path",uploadPath )
+  var Finalpath = '/uploads/' + new Date().getTime() + "." + filetype;
+  console.log("uploaded path", uploadPath)
 
 
-  sampleFile.mv(uploadPath, function(err) {
+  sampleFile.mv(uploadPath, function (err) {
     if (err) {
-   console.log(err)
-   return res.error(500, "Internal server error");
+      console.log(err)
+      return res.error(500, "Internal server error");
     }
-   res.json({Status:"Success",Message:"file upload success", Data :Finalpath, BaseUrl : BaseUrl, Code:200});
+    res.json({ Status: "Success", Message: "file upload success", Data: Finalpath, BaseUrl: BaseUrl, Code: 200 });
   });
 });
 
 
 
-app.post('/upload1', function(req, res) {
+app.post('/upload1', function (req, res) {
   let sampleFile;
   let uploadPath;
 
   if (!req.files || Object.keys(req.files).length === 0) {
-    res.error(300,'No files were uploaded.');
+    res.error(300, 'No files were uploaded.');
     return;
   }
 
@@ -128,16 +129,16 @@ app.post('/upload1', function(req, res) {
 
   uploadPath = __dirname + '/public/uploads/' + sampleFile.name;
 
-  var Finalpath = '/uploads/'+ sampleFile.name;
-   console.log("uploaded path",uploadPath )
+  var Finalpath = '/uploads/' + sampleFile.name;
+  console.log("uploaded path", uploadPath)
 
 
-  sampleFile.mv(uploadPath, function(err) {
+  sampleFile.mv(uploadPath, function (err) {
     if (err) {
-   console.log(err)
-   return res.error(500, "Internal server error");
+      console.log(err)
+      return res.error(500, "Internal server error");
     }
-   res.json({Status:"Success",Message:"file upload success", Data :Finalpath, BaseUrl : BaseUrl,Code:200});
+    res.json({ Status: "Success", Message: "file upload success", Data: Finalpath, BaseUrl: global.BaseUrl, Code: 200 });
   });
 });
 
@@ -180,12 +181,12 @@ app.use('/api/usersubscription', userSubscription);
 
 
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
   next(createError(404));
 });
 
 // error handler
-app.use(function(err, req, res, next) {
+app.use(function (err, req, res, next) {
   // set locals, only providing error in development
   console.log(err.message);
   res.locals.message = err.message;
@@ -197,3 +198,53 @@ app.use(function(err, req, res, next) {
 });
 
 module.exports = app;
+
+global.push_notification = async function (params) {
+  request.post(
+    BaseUrl + '/notification/send_notification',
+    { json: params },
+    function (error, response, body) {
+      if (!error && response.statusCode == 200) {
+      }
+    }
+  );
+}
+
+setInterval(function () {
+  budgetModel.find({ budget_status: "Active", delete_status: false, budget_end_date: { $lte: new Date() } }, async function (err, budgets) {
+   await budgets.forEach(async budget => {
+      await transactionModel.aggregate([
+        {
+          $match: { transaction_budget_id: budget._id.toString(), transaction_way: "Debit" }
+        },
+        {
+          $group: {
+            _id: "$transaction_budget_id",
+            total: { $sum: "$transaction_amount" }
+          }
+        }
+      ], async function (err, transactions) {
+        if(err) console.log(err);
+        if (transactions.length > 0) {
+          if (transactions[0].total <= budget.budget_amount) {
+            console.log("calling push notification");
+            global.push_notification({
+              user_id: budget.budget_userid,
+              notify_title: "Budget Achieved",
+              notify_descri: "Congratulations on achieving your " + (budget.budget_period_type === "Custom" ? "Onetime" : budget.budget_period_type) + " " + budget.budget_title + " budget target. ",
+              notify_img: "#4ECB71",
+              notify_color: '/images/notification/budget-achieved.png'
+            });
+            await budgetModel.findByIdAndUpdate(budget._id, { budget_status: "Expired" });
+          }
+          else{
+            await budgetModel.findByIdAndUpdate(budget._id, { budget_status: "Exceeded and Expired" });
+          }
+        }
+        else{
+          await budgetModel.findByIdAndUpdate(budget._id, { budget_status: "Expired" });
+        }
+      });
+    });
+  });
+}, 5 * 60 * 1000); // every 5 minutes to change budget status as inactive if budget_end_date expired

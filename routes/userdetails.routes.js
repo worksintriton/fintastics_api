@@ -329,12 +329,9 @@ router.get('/getlist', function (req, res) {
 });
 
 router.post('/mobile/update/fb_token', function (req, res) {
-  console.log(req.body);
   userdetailsModel.findByIdAndUpdate(req.body.user_id, req.body, { new: true }, function (err, UpdatedDetails) {
     if (err) return res.json({ Status: "Failed", Message: "Internal Server Error", Data: {}, Code: 500 });
-    console.log(err);
     res.json({ Status: "Success", Message: "FB Updated", Data: UpdatedDetails, Code: 200 });
-    console.log(req.body);
   });
 });
 
@@ -484,7 +481,29 @@ router.post('/getFilterDatas', function (req, res) {
 });
 
 
-
+router.post("/test_push_notification", function (req, res) {
+  let params = {
+    user_id: "",
+    fb_token: req.body.fb_token,
+    notify_title: 'Test Notification',
+    notify_descri: 'Test Notification success',
+    notify_img: 'images/notification/transaction-added.png',
+    notify_time: '',
+    notify_status: 'Unread',
+    notify_color: '#322274',
+    date_and_time: new Date().toISOString(),
+    delete_status: false
+  };
+  request.post(
+    'http://35.88.62.26:3000/api/notification/send_notifiation',
+    { json: params },
+    function (error, response, body) {
+      res.json(response);
+      if (!error && response.statusCode == 200) {
+      }
+    }
+  );
+});
 
 
 ///test

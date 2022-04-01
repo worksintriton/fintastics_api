@@ -6,121 +6,135 @@ router.use(bodyParser.json());
 var transactionModel = require('./../models/transactionModel');
 var userdetailsModel = require('./../models/userdetailsModel');
 var notificationModel = require('./../models/notificationModel');
-let { Mongoose, Types } = require('mongoose');
 const subscriptionModel = require('../models/subscriptionModel');
 const budgetModel = require('../models/budgetModel');
+const { db } = require('../models/budgetModel');
+const moment = require('moment');
 
 router.post('/create', async function (req, res) {
-  /*var system_date = req.body.transaction_date.split(" ");
-  var system_date1 = system_date[0].split("-");
-  var final_time = system_date1[2] + "-" + system_date1[1] + "-" + system_date1[0];
-  system_date = final_time + "T00:00:00.000Z";*/
+  let valid = true;
+  if (req.body.transaction_budget_id !== "") {
+    let budget = await budgetModel.findById(req.body.transaction_budget_id);
+    if (budget != null && !(new Date(req.body.transaction_date) >= new Date(budget.budget_start_date) &&
+      new Date(req.body.transaction_date) <= new Date(budget.budget_end_date))) {
+      valid = false;
+      let msg = "This Budget Limit is only valid from " + new Date(budget.budget_start_date).toLocaleDateString("en-IN", { month: 'short', day: '2-digit', year: '2-digit' }) + " to " + new Date(budget.budget_end_date).toLocaleDateString("en-IN", { month: 'short', day: '2-digit', year: '2-digit' }) + ". Edit the date.";
+      res.json({ Status: "Success", Message: msg, budget_msg: msg, Code: 400 });
+    }
+  }
+  if (valid) {
+    system_date = req.body.transaction_date.substring(0, req.body.transaction_date.indexOf(" "));
+    if (req.body.transaction_sub_desc == "") {
+      req.body.transaction_sub_desc = null;
+    }
+    try {
+      await transactionModel.create({
+        transaction_date: req.body.transaction_date,
+        transaction_type: req.body.transaction_type,
+        transaction_desc: req.body.transaction_desc,
+        transaction_sub_desc: req.body.transaction_sub_desc,
+        transaction_way: req.body.transaction_way,
+        transaction_amount: req.body.transaction_amount,
+        transaction_balance: req.body.transaction_balance,
+        transaction_currency_type: req.body.transaction_currency_type || "INR",
+        transaction_currency_symbol: req.body.transaction_currency_symbol,
+        system_date: system_date,
+        user_id: req.body.user_id,
+        parent_code: req.body.parent_code,
+        delete_status: false,
+        transaction_budget_id: req.body.transaction_budget_id
+      },
+        async function (err, transaction) {
+          if (err) {
+            res.json({ Status: "Failed", Message: err.message, Code: 500 });
+          } else {
 
-  system_date = req.body.transaction_date.substring(0, req.body.transaction_date.indexOf("T"));
-  try {
-    await transactionModel.create({
-      transaction_date: req.body.transaction_date,
-      transaction_type: req.body.transaction_type,
-      transaction_desc: req.body.transaction_desc,
-      transaction_sub_desc: req.body.transaction_sub_desc,
-      transaction_way: req.body.transaction_way,
-      transaction_amount: req.body.transaction_amount,
-      transaction_balance: req.body.transaction_balance,
-      transaction_currency_type: req.body.transaction_currency_type || "INR",
-      transaction_currency_symbol: req.body.transaction_currency_symbol,
-      system_date: system_date,
-      user_id: req.body.user_id,
-      parent_code: req.body.parent_code,
-      delete_status: false,
-      transaction_budget_id: req.body.transaction_budget_id
-    },
-      async function (err, transaction) {
-        if (err) {
-          res.json({ Status: "Failed", Message: err.message, Code: 500 });
-        } else {
+            global.push_notification({
+              user_id: req.body.user_id,
+              notify_title: 'Transaction Added',
+              notify_descri: 'A new transaction has been added',
+              notify_img: '/images/notification/transaction-added.png',
+              notify_color: '#322274',
+            });
 
-          let budget_msg = "";
-          await budgetModel.findById(req.body.transaction_budget_id, function (err, budget) {
-            if (budget !== null) {
-              if (budget.budget_notification) {
-                transactionModel.aggregate([
-                  {
-                    $match: { transaction_budget_id: req.body.transaction_budget_id, transaction_way: "Debit" }
-                  },
-                  {
-                    $group: {
-                      _id: "$transaction_budget_id",
-                      total: { $sum: "$transaction_amount" }
-                    }
-                  }
-                ], async function (err, transactions) {
-                  if (transactions.length > 0) {
-                    let notify_title = "", notify_msg = "", notify_color = "";
-                    if (transactions[0].total > budget.budget_amount) {
-                      budget_msg = "The " + (budget.budget_period_type === "Custom" ? "Onetime" : budget.budget_period_type) + " budget plan \"" + budget.budget_title + "\" has gone over its limit";
-                      notify_title = "Budget Exceeded";
-                      notify_msg = "The " + (budget.budget_period_type === "Custom" ? "Onetime" : budget.budget_period_type) + " budget plan " + budget.budget_title + " has exceeded its limit ";
-                      notify_color = "#E80F0F";
-                    }
-                    else if (transactions[0].total === budget.budget_amount) {
-                      budget_msg = "The " + (budget.budget_period_type === "Custom" ? "Onetime" : budget.budget_period_type) + " budget plan \"" + budget.budget_title + "\" has reached its limit";
-                      notify_title = "Budget Achieved";
-                      notify_msg = "Congratulations on achieving your " + (budget.budget_period_type === "Custom" ? "Onetime" : budget.budget_period_type) + " " + budget.budget_title + " budget target. ";
-                      notify_color = "#4ECB71";
-                    }
-                    else if (((transactions[0].total / budget.budget_amount) * 100) > 90) {
-                      budget_msg = "Almost 90% of your weekly budget of " + budget.budget_currency + "." + budget.budget_amount + " for " + budget.budget_title + " has been spent.";
-                      notify_title = 'Budget Warning';
-                      notify_msg = "Your weekly budget limit for " + (budget.budget_period_type === "Custom" ? "Onetime" : budget.budget_period_type) + " is about to exceed " + budget.budget_currency_symbol + transactions[0].total + " of " + budget.budget_currency_symbol + budget.budget_amount + ".";
-                      notify_color = "#E8C50F";
-                    }
-                    else {
-                      budget_msg = "Transaction added for your " + (budget.budget_period_type === "Custom" ? "Onetime" : budget.budget_period_type) + " budget " + budget.budget_title;
-                      notify_color = "";
-                    }
-
-                    if (notify_msg !== "") {
-                      await notificationModel.create({
-                        user_id: req.body.user_id,
-                        notify_title: notify_title,
-                        notify_descri: notify_msg,
-                        notify_img: '/images/notification/budget-exceeded.png',
-                        notify_time: '',
-                        notify_status: 'Unread',
-                        notify_color: notify_color,
-                        date_and_time: new Date().toISOString(),
-                        delete_status: false
-                      }, function (err, notify) {
-
-                      });
-                    }
-                  }
+            let current_user = await db.userdetailsModel.findById(req.body.user_id);
+            let parent = null;
+            if (current_user != null && current_user.parent_of !== "") {
+              parent = await db.userdetailsModel.findOne({ parent_code: current_user.parent_of });
+              if (parent != null) {
+                global.push_notification({
+                  user_id: parent._id,
+                  notify_title: 'Member Transaction',
+                  notify_descri: 'A new transaction on ' + (req.body.transact_way === 'Credit' ? 'Income' : 'Expense') + " has been added for " + (parseFloat(req.body.transaction_amount).toFixed(2)) + " by " + (current_user.first_name + " " + current_user.last_name),
+                  notify_img: '/images/notification/transaction-added.png',
+                  notify_color: '#322274',
                 });
               }
             }
-          });
 
+            let budget_msg = "";
+            if (req.body.transaction_budget_id !== "") {
+              await budgetModel.findById(req.body.transaction_budget_id, async function (err, budget) {
+                if (budget !== null && budget.budget_notification) {
+                  let budget_msg = "Transaction added for your " + (budget.budget_period_type === "Custom" ? "Onetime" : budget.budget_period_type) + " budget " + budget.budget_title;
+                  let aggr = [
+                    {
+                      $match: { transaction_budget_id: req.body.transaction_budget_id, transaction_way: "Debit" }
+                    },
+                    {
+                      $group: {
+                        _id: "$transaction_budget_id",
+                        total: { $sum: "$transaction_amount" }
+                      }
+                    }
+                  ];
+                  await transactionModel.aggregate(aggr, async function (err, transactions) {
+                    if (transactions.length > 0) {
+                      let notify_params = { user_id: req.body.user_id };
+                      if (transactions[0].total > budget.budget_amount) {
+                        budget_msg = "The " + (budget.budget_period_type === "Custom" ? "Onetime" : budget.budget_period_type) + " budget plan \"" + budget.budget_title + "\" has gone over its limit";
+                        notify_params.notify_title = "Budget Exceeded";
+                        notify_params.notify_descri = "The " + (budget.budget_period_type === "Custom" ? "Onetime" : budget.budget_period_type) + " budget plan " + budget.budget_title + " has exceeded its limit ";
+                        notify_params.notify_color = "#E80F0F";
+                        notify_params.notify_img = '/images/notification/budget-exceeded.png';
+                        global.push_notification(notify_params);
 
-          await notificationModel.create({
-            user_id: req.body.user_id,
-            notify_title: 'Transaction Added',
-            notify_descri: 'A new transaction has been added',
-            notify_img: '/images/notification/transaction-added.png',
-            notify_time: '',
-            notify_status: 'Unread',
-            notify_color: '#322274',
-            date_and_time: new Date().toISOString(),
-            delete_status: false
-          },
-            function (err, notification) {
-              //res.json({ Status: "Success", Message: "Notification Added successfully", Data: res, Code: 200 });
+                        if (parent != null) {
+                          notify_params.user_id = parent._id;
+                          global.push_notification(notify_params);
+                        }
+                      }
+                      else if (((transactions[0].total / budget.budget_amount) * 100) > 90) {
+                        budget_msg = "Almost 90% of your " + budget.budget_title + " budget of " + budget.budget_currency + "." + budget.budget_amount + " for " + budget.budget_title + " has been spent.";
+                        notify_params.notify_title = 'Budget Warning';
+                        notify_params.notify_descri = "Your " + (budget.budget_period_type === "Custom" ? "Onetime" : budget.budget_period_type) + " budget limit for " + budget.budget_title + " is about to exceed " + budget.budget_currency_symbol + transactions[0].total + " of " + budget.budget_currency_symbol + budget.budget_amount + ".";
+                        notify_params.notify_color = "#E8C50F";
+                        notify_params.notify_img = '/images/notification/budget-warning.png';
+                        global.push_notification(notify_params);
+
+                        if (parent != null) {
+                          notify_params.user_id = parent._id;
+                          global.push_notification(notify_params);
+                        }
+                      }
+                    }
+                    res.json({ Status: "Success", Message: "Added successfully", Data: transaction, budget_msg: budget_msg, Code: 200 });
+                  });
+                }
+                else {
+                  res.json({ Status: "Success", Message: "Added successfully", Data: transaction, budget_msg: budget_msg, Code: 200 });
+                }
+              });
+            }
+            else {
               res.json({ Status: "Success", Message: "Added successfully", Data: transaction, budget_msg: budget_msg, Code: 200 });
-            });
-        }
-      });
-  }
-  catch (e) {
-    res.json({ Status: "Failed", Message: ex.message, Code: 500 });
+            }
+          }
+        });
+    }
+    catch (e) {
+      res.json({ Status: "Failed", Message: ex.message, Code: 500 });
+    }
   }
 });
 
@@ -312,15 +326,17 @@ router.post('/get_balance_amount', async function (req, res) {
 });
 
 router.post('/income/report', async function (req, res) {
-  income_expense_report(req, res, 'income');
+  req.body.transaction_way = "Credit";
+  income_expense_report(req, res);
 });
 
 router.post('/expenditure/report', async function (req, res) {
-  income_expense_report(req, res, 'expense');
+  req.body.transaction_way = "Debit";
+  income_expense_report(req, res);
 });
-async function income_expense_report(req, res, filter) {
+async function income_expense_report(req, res) {
   try {
-    let params = { user_id: req.body.user_id }
+    let params = { user_id: req.body.user_id, transaction_way: req.body.transaction_way }
     if (req.body.start_date && req.body.end_date && req.body.start_date !== '' && req.body.end_date !== '') {
       req.body.start_date = new Date(new Date(req.body.start_date).toISOString());
       req.body.end_date = new Date(new Date(req.body.end_date + 'T23:59:59Z').toISOString());
@@ -489,10 +505,6 @@ async function movement_transaction_report(req, res) {
   }
 }
 
-function changeTZ(date1, timezone1) {
-  return new Date((typeof date1 === "string" ? new Date(date1) : date1).toLocaleString("en-US", { timeZone: timezone1 }));
-}
-
 router.post('/dashboard/data', async function (req, res) {
   try {
     let user_details = await userdetailsModel.findOne({ _id: req.body.user_id });
@@ -511,12 +523,10 @@ router.post('/dashboard/data', async function (req, res) {
       total_count: count_1 + count_2
     }
 
-    req.body.start_date = changeTZ(new Date(req.body.start_date + 'T00:00:00.000Z'), "Etc/Greenwich"); //new Date(req.body.start_date + 'T00:00:00.000Z').toISOString();
-    req.body.end_date = changeTZ(new Date(req.body.end_date + 'T23:59:59.000Z'), "Etc/Greenwich"); //new Date(req.body.end_date + 'T23:59:59.000Z').toISOString();
     let params = {
       transaction_date: {
-        $gte: req.body.start_date,
-        $lte: req.body.end_date
+        $gte: new Date(req.body.start_date),
+        $lte: new Date(req.body.end_date)
       },
       user_id: req.body.user_id, transaction_way: req.body.transaction_way,
       delete_status: false
@@ -524,13 +534,76 @@ router.post('/dashboard/data', async function (req, res) {
     if (req.body.transaction_type && req.body.transaction_type !== '') {
       params.transaction_type = req.body.transaction_type;
     }
+    let aggr = [{ $match: params },
+    {
+      $addFields: {
+        "transaction_desc_id": { $toObjectId: "$transaction_desc" },
+        "transaction_sub_desc_id": { $toObjectId: "$transaction_sub_desc" },
+        "transaction_type_id": { $toObjectId: "$transaction_type" }
+      }
+    },
+    {
+      $lookup: {
+        from: 'desc_types',
+        'localField': 'transaction_desc_id',
+        'foreignField': '_id',
+        'as': 'desc_type'
+      }
+    },
+    {
+      $lookup: {
+        from: 'sub_desc_types',
+        'localField': 'transaction_sub_desc_id',
+        'foreignField': '_id',
+        'as': 'sub_desc_type'
+      }
+    },
+    {
+      $lookup: {
+        from: 'payment_types',
+        'localField': 'transaction_type_id',
+        'foreignField': '_id',
+        'as': 'payment_type'
+      }
+    },
+    {
+      $unwind: {
+        path: "$desc_type",
+        preserveNullAndEmptyArrays: true
+      }
+    },
+    {
+      $unwind: {
+        path: "$sub_desc_type",
+        preserveNullAndEmptyArrays: true
+      }
+    },
+    {
+      $unwind: {
+        path: "$payment_type",
+        preserveNullAndEmptyArrays: true
+      }
+    },
+    {
+      $addFields: {
+        "transaction_description": "$desc_type.desc_type",
+        "transaction_sub_description": "$sub_desc_type.sub_desc_type",
+        "transaction_type": "$payment_type.payment_type",
+      }
+    },
+    {
+      $project: {
+        transaction_date: 1, transaction_description: 1, transaction_sub_description: 1, transaction_type: 1,
+        transaction_way: 1, transaction_amount: 1, transaction_balance: 1, transaction_currency_symbol: 1, createdAt: 1
+      }
+    },
+    { $sort: { _id: -1 } }];
+    let transactions = await transactionModel.aggregate(aggr);
+    //let transactions = await transactionModel.find(params, {createdAt:0, updatedAt:0, delete_status: 0, __v:0}, { sort: { _id: -1 } });
 
-    let transactions = await transactionModel.find(params, {}, { sort: { _id: -1 } });
     let fin_credit = 0;
     let fin_debit = 0;
     transactions.forEach(element => {
-      element.transaction_date = changeTZ(element.transaction_date, req.body.timezone);
-      element.system_date = changeTZ(element.system_date, req.body.timezone);
       if (element.transaction_way == "Credit") {
         fin_credit = +fin_credit + +element.transaction_amount;
       }
@@ -548,6 +621,11 @@ router.post('/dashboard/data', async function (req, res) {
     if (user_details.delete_status) {
       user_blocked_msg = "Your account had blocked for more details contact your admin";
     }
+    transactions.forEach(x => {
+      x.transaction_date = new Date(x.transaction_date).toLocaleDateString("en-CA") + " " + new Date(x.transaction_date).toLocaleTimeString("en-US", { hour: '2-digit', minute: '2-digit' })
+      x.createdAt = moment(x.createdAt).tz(req.body.timezone).format("YYYY-MM DD hh:mm am");
+      x.createdAt = new Date(x.createdAt).toLocaleDateString("en-CA") + " " + new Date(x.createdAt).toLocaleTimeString("en-US", { hour: '2-digit', minute: '2-digit' })
+    });
     res.json({ Status: "Success", Message: "Filter dashboard", Data: transactions, balance: balance, user_count: userCount, notification_count: notificationCount, user_blocked: user_blocked_msg, Code: 200 });
   }
   catch (ex) {
@@ -585,6 +663,9 @@ router.post("/budget_transactions_by_category", async function (req, res) {
       },
       { $project: { "_id": 0 } }
     ];
+    if (req.body.asc) {
+      aggr.push({ $sort: { "category": (req.body.asc == true ? 1 : -1) } });
+    }
     console.log(JSON.stringify(aggr));
     transactionModel.aggregate(aggr, function (err, transactions) {
       console.log(transactions);
@@ -619,25 +700,27 @@ router.post('/accountsummery/data', async function (req, res) {
     admin_count: count_2,
     total_count: total_count
   }
-  let Credit_amount = await transactionModel.find({ user_id: req.body.user_id }, {}, { sort: { _id: -1 } });
+  let transactions = await transactionModel.aggregate([{ $match: { user_id: req.body.user_id } }, { $sort: { _id: -1 } }]);
   var fin_credit = 0;
   var fin_debit = 0;
-  Credit_amount.forEach(element => {
+  transactions.forEach(element => {
+    element.transaction_date = new Date(element.transaction_date).toLocaleDateString("en-CA");
+    element.createdAt = new Date(element.createdAt).toLocaleDateString("en-CA") + " " + new Date(element.createdAt).toLocaleTimeString("en-US", { hour: '2-digit', minute: '2-digit' });
     if (element.transaction_way == "Credit") {
       fin_credit = +fin_credit + +element.transaction_amount;
     }
   });
-  Credit_amount.forEach(element => {
+  transactions.forEach(element => {
     if (element.transaction_way == "Debit") {
       fin_debit = +fin_debit + +element.transaction_amount;
     }
   });
-  let c = {
+  let balance = {
     Credit_amount: fin_credit,
     Debit_amount: fin_debit,
     Balance_amount: fin_credit - fin_debit,
   }
-  res.json({ Status: "Success", Message: "account summery data", Data: Credit_amount, balance: c, user_count: f, Code: 200 });
+  res.json({ Status: "Success", Message: "account summery data", Data: transactions, balance: balance, user_count: f, Code: 200 });
 });
 
 

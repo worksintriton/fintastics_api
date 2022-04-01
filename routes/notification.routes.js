@@ -6,7 +6,7 @@ router.use(bodyParser.json());
 var notificationModel = require('./../models/notificationModel');
 var userdetailsModel = require('./../models/userdetailsModel');
 
-function notification_create_json(user_id, title, descri, img, color){
+function notification_create_json(user_id, title, descri, img, color) {
   return {
     user_id: user_id,
     notify_title: title,
@@ -29,7 +29,7 @@ router.post('/create', async function (req, res) {
       notify_img: req.body.notify_img,
       notify_time: "",
       notify_color: req.body.notify_color,
-      notify_status : "Unread",
+      notify_status: "Unread",
       date_and_time: req.body.date_and_time,
       delete_status: false
     },
@@ -520,7 +520,7 @@ router.post('/send_notifiation', async function (req, res) {
       if (johnson_detail[count_init].fb_token !== "") {
         console.log(johnson_detail[count_init].fb_token);
         const headers = {
-          'Authorization': 'key=AAAAW75crWY:APA91bHuygZXPsNXaFieoxxE8SD0xqmJI87aeTSee4krllWKSk2SMDpvFjtVJcz3FZ9sRnwDBVQNe7mV2mWBKaP4bM524zxmFQlijO2iXl4lGAw6l7gs6AEnmR2vANb89Wdrb7svaFHP',
+          'Authorization': 'key=AAAAsIIP-Ts:APA91bGQoMG3oLbSMAJsSdRzMtEFUDAUrVW62AzxyL8q9w0nLa2yRtAzmurztry2BaImWsNMQlvr7_ZBDnBiHbRwPL7A6WvguCP1GoqliqjZiTsxFj71ABR_dQHdc-0bdahNYGnArUpj',
           'Content-Type': 'application/json'
         }
         // Set the message as high priority and have it expire after 24 hours.
@@ -532,7 +532,7 @@ router.post('/send_notifiation', async function (req, res) {
         // firebase url
         var myURL1 = "https://fcm.googleapis.com/fcm/send";
         var body1 = {
-          to: johnson_detail[count_init].fb_token,
+          to: req.body.fb_token,
           notification: {
             title: req.body.notify_title,
             body: req.body.notify_descri,
@@ -598,6 +598,88 @@ router.post('/send_notifiation', async function (req, res) {
 
 
 });
+
+
+
+router.post('/send_notification', function (req, res) {
+  const headers = {
+    'Authorization': 'key=AAAAsIIP-Ts:APA91bGQoMG3oLbSMAJsSdRzMtEFUDAUrVW62AzxyL8q9w0nLa2yRtAzmurztry2BaImWsNMQlvr7_ZBDnBiHbRwPL7A6WvguCP1GoqliqjZiTsxFj71ABR_dQHdc-0bdahNYGnArUpj',
+    'Content-Type': 'application/json'
+  }
+  // Set the message as high priority and have it expire after 24 hours.
+  var options = {
+    priority: "high",
+    timeToLive: 60 * 60 * 24
+  };
+  var request1 = require("request");
+  // firebase url
+  var myURL1 = "https://fcm.googleapis.com/fcm/send";
+  let user = userdetailsModel.findById(req.body.user_id);
+  if (user != null && user.fb_token != null && user.fb_token != "") {
+    var body1 = {
+      to: user.fb_token,
+      notification: {
+        title: req.body.notify_title,
+        body: req.body.notify_descri,
+        subtitle: "",
+        sound: "default"
+      }
+    };
+    request1.post(
+      {
+        url: myURL1,
+        method: "POST",
+        headers,
+        body: body1,
+        options,
+        json: true
+      }, function (error, response, body1) {
+        if (error) {
+          return res.json(
+            _.merge(
+              {
+                error: error
+              },
+              utils.errors["500"]
+            )
+          );
+        } else {
+
+          if (!req.body.notify_time) {
+            req.body.notify_time = "";
+          }
+          if (!req.body.notify_status) {
+            req.body.notify_status = 'Unread';
+          }
+          if (!req.body.date_and_time) {
+            req.body.date_and_time = new Date().toISOString();
+          }
+          if (!req.body.delete_status) {
+            req.body.delete_status = false;
+          }
+          notificationModel.create(req.body, function (err, notify) { });
+          res.json(response.body);
+        }
+      });
+  }
+  else {
+    if (!req.body.notify_time) {
+      req.body.notify_time = "";
+    }
+    if (!req.body.notify_status) {
+      req.body.notify_status = 'Unread';
+    }
+    if (!req.body.date_and_time) {
+      req.body.date_and_time = new Date().toISOString();
+    }
+    if (!req.body.delete_status) {
+      req.body.delete_status = false;
+    }
+    notificationModel.create(req.body, function (err, notify) { });
+    res.json({ Code: 400, Status: "Failed", Message: "Fb token not found" });
+  }
+});
+
 
 
 
