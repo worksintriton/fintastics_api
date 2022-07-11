@@ -5,14 +5,7 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var bodyParser = require('body-parser');
 var fileUpload = require('express-fileupload');
-var pdf = require('html-pdf');
-const puppeteer = require('puppeteer');
-const { v4: uuidv4 } = require('uuid');
-const moment = require('moment');
-var fs = require('fs');
-var pug = require('pug');
 var request = require("request");
-var userdetailsModel = require('./models/userdetailsModel');
 var responseMiddleware = require('./middlewares/response.middleware');
 const transactionModel = require('./models/transactionModel');
 /*Routing*/
@@ -41,6 +34,10 @@ var currency = require('./routes/currency.routes');
 var subscription = require('./routes/subscription.routes');
 
 var userSubscription = require('./routes/userSubscription.routes');
+
+var chat = require('./routes/chat.routes');
+
+var conversation = require('./routes/conversations.routes');
 
 /*Database connectivity*/
 
@@ -179,6 +176,9 @@ app.use('/api/subscription', subscription);
 
 app.use('/api/usersubscription', userSubscription);
 
+app.use('/api/chat', chat);
+
+app.use('/api/conversation', conversation);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

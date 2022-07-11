@@ -1,6 +1,5 @@
 var mongoose = require('mongoose');
 var timestamps = require('mongoose-timestamp');
-const Schema = mongoose.Schema; 
 
 var ActivitySchema = new mongoose.Schema({  
   user_type:  String,

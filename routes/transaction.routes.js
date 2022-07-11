@@ -59,17 +59,34 @@ router.post('/create', async function (req, res) {
 
             let current_user = await db.userdetailsModel.findById(req.body.user_id);
             let parent = null;
-            if (current_user != null && current_user.parent_of !== "") {
+            if (req.body.transaction_budget_id === "" && current_user != null && current_user.parent_of !== "") {
               parent = await db.userdetailsModel.findOne({ parent_code: current_user.parent_of });
               if (parent != null) {
                 global.push_notification({
                   user_id: parent._id,
                   notify_title: 'Member Transaction',
-                  notify_descri: 'A new transaction on ' + (req.body.transact_way === 'Credit' ? 'Income' : 'Expense') + " has been added for " + (parseFloat(req.body.transaction_amount).toFixed(2)) + " by " + (current_user.first_name + " " + current_user.last_name),
+                  notify_descri: 'A new transaction on ' + (req.body.transaction_way === 'Credit' ? 'Income' : 'Expense') + " has been added for " + (parseFloat(req.body.transaction_amount).toFixed(2)) + " by " + (current_user.first_name + " " + current_user.last_name),
                   notify_img: '/images/notification/transaction-added.png',
                   notify_color: '#322274',
                 });
               }
+            }
+
+            if (req.body.transaction_budget_id !== "") {
+              let parentkey = current_user.parent_of !== "" ? current_user.parent_of : current_user.parent_code;
+              await db.userdetailsModel.aggregate([{ $match: { $or: [{ "parent_of": parentkey }, { "parent_code": parentkey }] } }]).exec(async function (err, others) {
+                for (let i = 0; i < others.length; i++) {
+                  if (others[i]._id != req.body.user_id) {
+                    global.push_notification({
+                      user_id: others[i]._id,
+                      notify_title: (others[i].parent_of !== "" && current_user.parent_code !== "" ? 'Admin Transaction' : 'Member Transaction'),
+                      notify_descri: 'A new transaction on ' + (req.body.transaction_way === 'Credit' ? 'Income' : 'Expense') + " has been added for " + (parseFloat(req.body.transaction_amount).toFixed(2)) + " by " + (current_user.first_name + " " + current_user.last_name),
+                      notify_img: '/images/notification/transaction-added.png',
+                      notify_color: '#322274',
+                    });
+                  }
+                }
+              });
             }
 
             let budget_msg = "";
@@ -102,6 +119,14 @@ router.post('/create', async function (req, res) {
                         if (parent != null) {
                           notify_params.user_id = parent._id;
                           global.push_notification(notify_params);
+
+                          let childs = await userdetailsModel.find({ "parent_of": parent.parent_code });
+                          for (let i = 0; i < childs.length; i++) {
+                            if (childs[i]._id != req.body.user_id) {
+                              notify_params.user_id = childs[i]._id;
+                              global.push_notification(params);
+                            }
+                          }
                         }
                       }
                       else if (((transactions[0].total / budget.budget_amount) * 100) > 90) {
@@ -115,6 +140,14 @@ router.post('/create', async function (req, res) {
                         if (parent != null) {
                           notify_params.user_id = parent._id;
                           global.push_notification(notify_params);
+
+                          let childs1 = await userdetailsModel.find({ "parent_of": parent.parent_code });
+                          for (let i = 0; i < childs1.length; i++) {
+                            if (child[i]._id != req.body.user_id) {
+                              params.user_id = childs[i]._id;
+                              global.push_notification(params);
+                            }
+                          }
                         }
                       }
                     }
@@ -326,17 +359,15 @@ router.post('/get_balance_amount', async function (req, res) {
 });
 
 router.post('/income/report', async function (req, res) {
-  req.body.transaction_way = "Credit";
-  income_expense_report(req, res);
+  income_expense_report(req, res, 'Credit');
 });
 
 router.post('/expenditure/report', async function (req, res) {
-  req.body.transaction_way = "Debit";
-  income_expense_report(req, res);
+  income_expense_report(req, res, 'Debit');
 });
 async function income_expense_report(req, res) {
   try {
-    let params = { user_id: req.body.user_id, transaction_way: req.body.transaction_way }
+    let params = { user_id: req.body.user_id }
     if (req.body.start_date && req.body.end_date && req.body.start_date !== '' && req.body.end_date !== '') {
       req.body.start_date = new Date(new Date(req.body.start_date).toISOString());
       req.body.end_date = new Date(new Date(req.body.end_date + 'T23:59:59Z').toISOString());
@@ -373,6 +404,10 @@ async function income_expense_report(req, res) {
           },
           "amount": { "$sum": "$amount" }
         }
+      }, {
+        "$sort": {
+          "_id": -1
+        }
       }
     ];
     transactionModel.aggregate(aggr, function (err, translist) {
@@ -385,7 +420,9 @@ async function income_expense_report(req, res) {
           translist.forEach(x => {
             x.by_transaction_way.forEach(x1 => {
               currency = x1.id.transaction_currency;
-              final_data.push({ _id: x._id.system_date, price: x1.amount, currency: x._id.transaction_currency });
+              if (filter === x1.transaction_way) {
+                final_data.push({ _id: x._id.system_date, price: x1.amount, currency: x._id.transaction_currency });
+              }
               if (x1.transaction_way === "Credit") {
                 total_credit_value += x1.amount;
               }
@@ -462,6 +499,10 @@ async function movement_transaction_report(req, res) {
             }
           },
           "amount": { "$sum": "$amount" }
+        }
+      }, {
+        "$sort": {
+          "_id": -1
         }
       }
     ];
@@ -624,7 +665,6 @@ router.post('/dashboard/data', async function (req, res) {
     transactions.forEach(x => {
       x.transaction_date = new Date(x.transaction_date).toLocaleDateString("en-CA") + " " + new Date(x.transaction_date).toLocaleTimeString("en-US", { hour: '2-digit', minute: '2-digit' })
       x.createdAt = moment(x.createdAt).tz(req.body.timezone).format("YYYY-MM DD hh:mm am");
-      x.createdAt = new Date(x.createdAt).toLocaleDateString("en-CA") + " " + new Date(x.createdAt).toLocaleTimeString("en-US", { hour: '2-digit', minute: '2-digit' })
     });
     res.json({ Status: "Success", Message: "Filter dashboard", Data: transactions, balance: balance, user_count: userCount, notification_count: notificationCount, user_blocked: user_blocked_msg, Code: 200 });
   }
@@ -705,7 +745,7 @@ router.post('/accountsummery/data', async function (req, res) {
   var fin_debit = 0;
   transactions.forEach(element => {
     element.transaction_date = new Date(element.transaction_date).toLocaleDateString("en-CA");
-    element.createdAt = new Date(element.createdAt).toLocaleDateString("en-CA") + " " + new Date(element.createdAt).toLocaleTimeString("en-US", { hour: '2-digit', minute: '2-digit' });
+    element.createdAt = moment(element.createdAt).tz(req.body.timezone).format("YYYY-MM DD hh:mm am");
     if (element.transaction_way == "Credit") {
       fin_credit = +fin_credit + +element.transaction_amount;
     }

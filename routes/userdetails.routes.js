@@ -31,61 +31,68 @@ router.post('/create', async function (req, res) {
         currency_symbol = parent.currency_symbol;
       }
     }
-    await userdetailsModel.create({
-      username: req.body.username || "",
-      password: req.body.password || "",
-      user_email: req.body.user_email || "",
-      first_name: req.body.first_name || "",
-      last_name: req.body.last_name || "",
-      dob: req.body.dob || "",
-      contact_number: req.body.contact_number || "",
-      fb_token: req.body.fb_token || "",
-      mobile_type: req.body.mobile_type || "",
-      delete_status: req.body.delete_status || "",
-      account_type: req.body.account_type || "",
-      roll_type: roll_type || "",
-      parent_code: result,
-      parent_of: req.body.parent_of || "",
-      profile_img: req.body.profile_img || "",
-      currency: currency,
-      currency_symbol: currency_symbol,
-      delete_status: false
-    },
-      async function (err, user) {
-        if (err) {
-          res.json({ Status: "Failed", Message: err.message, Code: 400 });
-        }
 
-        if (roll_type === 'Admin' || req.body.account_type === 'Personal') {
-          let free_subscription_id = "62208a171f3643036a603c13";
-          let list = await subscriptionModel.find({ _id: free_subscription_id }, { months: 1, amount: 1 });
-          if (list.length > 0) {
-            let enddate = new Date(new Date().setMonth(new Date().getMonth() + list[0].months));
-            await userSubscriptionModel.create({
-              userid: user._id,
-              subscriptionid: free_subscription_id,
-              startdate: new Date(),
-              enddate: enddate,
-              amount: list[0].amount,
-              expired: false,
-              delete_status: false
-            },
-              function (err, subscription) {
-                if (err) {
-                  res.json({ "Status": "Failure", Message: err.message, Code: 500 });
-                } else {
-                  res.json({ Status: "Success", Message: "Sign up successfully! welcome to Fintastics", Data: user, Code: 200 });
-                }
-              });
+    const existing_records = await userdetailsModel.find({ "user_email": req.body.user_email });
+    if (existing_records.length == 0) {
+      await userdetailsModel.create({
+        username: req.body.username || "",
+        password: req.body.password || "",
+        user_email: req.body.user_email || "",
+        first_name: req.body.first_name || "",
+        last_name: req.body.last_name || "",
+        dob: req.body.dob || "",
+        contact_number: req.body.contact_number || "",
+        fb_token: req.body.fb_token || "",
+        mobile_type: req.body.mobile_type || "",
+        delete_status: req.body.delete_status || "",
+        account_type: req.body.account_type || "",
+        roll_type: roll_type || "",
+        parent_code: result,
+        parent_of: req.body.parent_of || "",
+        profile_img: req.body.profile_img || "",
+        currency: currency,
+        currency_symbol: currency_symbol,
+        delete_status: false
+      },
+        async function (err, user) {
+          if (err) {
+            res.json({ Status: "Failed", Message: err.message, Code: 400 });
+          }
+
+          if (roll_type === 'Admin' || req.body.account_type === 'Personal') {
+            let free_subscription_id = "62208a171f3643036a603c13";
+            let list = await subscriptionModel.find({ _id: free_subscription_id }, { months: 1, amount: 1 });
+            if (list.length > 0) {
+              let enddate = new Date(new Date().setMonth(new Date().getMonth() + list[0].months));
+              await userSubscriptionModel.create({
+                userid: user._id,
+                subscriptionid: free_subscription_id,
+                startdate: new Date(),
+                enddate: enddate,
+                amount: list[0].amount,
+                expired: false,
+                delete_status: false
+              },
+                function (err, subscription) {
+                  if (err) {
+                    res.json({ "Status": "Failure", Message: err.message, Code: 500 });
+                  } else {
+                    res.json({ Status: "Success", Message: "Sign up successfully! welcome to Fintastics", Data: user, Code: 200 });
+                  }
+                });
+            }
+            else {
+              res.json({ "Status": "Failure", Message: "Wrong Subscription Id", Code: 500 });
+            }
           }
           else {
-            res.json({ "Status": "Failure", Message: "Wrong Subscription Id", Code: 500 });
+            res.json({ Status: "Success", Message: "Sign up successfully! welcome to Fintastics", Data: user, Code: 200 });
           }
-        }
-        else {
-          res.json({ Status: "Success", Message: "Sign up successfully! welcome to Fintastics", Data: user, Code: 200 });
-        }
-      });
+        });
+    }
+    else {
+      res.json({ "Status": "Failure", Message: "Already a record found with " + req.body.user_email, Code: 400 });
+    }
   }
   catch (e) {
     res.json({ Status: "Failed", Message: "Internal Server Error", Data: {}, Code: 500 });
@@ -147,13 +154,64 @@ router.put('/update/:id', function (req, res) {
 });
 
 router.post('/send/emailotp', async function (req, res) {
-  let email_detail = await userdetailsModel.findOne({ user_email: req.body.user_email });
-  if (email_detail == null) {
-    var randomChars = '0123456789';
-    var result = '';
-    for (var i = 0; i < 6; i++) {
-      result += randomChars.charAt(Math.floor(Math.random() * randomChars.length));
+  const existing_records = await userdetailsModel.find({ "user_email": req.body.user_email });
+  if (existing_records.length == 0) {
+    let email_detail = await userdetailsModel.findOne({ user_email: req.body.user_email });
+    if (email_detail == null) {
+      var randomChars = '0123456789';
+      var result = '';
+      for (var i = 0; i < 6; i++) {
+        result += randomChars.charAt(Math.floor(Math.random() * randomChars.length));
+      }
+      console.log(result);
+      let random = result;
+      var nodemailer = require('nodemailer');
+      var transporter = nodemailer.createTransport({
+        service: 'gmail',
+        host: 'smtp.gmail.com',
+        auth: {
+          user: 'thinkinghatstech@gmail.com',
+          pass: 'Pass@2021'
+        }
+      });
+
+      var mailOptions = {
+        from: 'thinkinghatstech@gmail.com',
+        to: req.body.user_email,
+        subject: "Email verification OTP",
+        text: "Hi, Your OTP is " + random + ". Petfolio OTP for Signup."
+      };
+
+      transporter.sendMail(mailOptions, function (error, info) {
+        if (error) {
+          console.log(error);
+          res.json({ Status: "Failed", Message: error.response, Data: {}, Code: 404 });
+        } else {
+          res.json({
+            Status: "Success", Message: "OTP Sent To Your Email Id", Data: {
+              'email_id': req.body.user_email,
+              'otp': random
+            }, Code: 200
+          });
+        }
+      });
     }
+    else {
+      res.json({ Status: "Failed", Message: "This email id already exist", Data: {}, Code: 404 });
+    }
+
+  }
+  else {
+    res.json({ "Status": "Failure", Message: "Already a record found with " + req.body.user_email, Code: 400 });
+  }
+});
+
+router.post('/forgotpassword', async function (req, res) {
+  let phone = await userdetailsModel.findOne({ user_email: req.body.user_email });
+  if (phone == null) {
+    res.json({ Status: "Failed", Message: "Invalid Email id", Data: {}, Code: 404 });
+  } else {
+    result = phone.password;
     console.log(result);
     let random = result;
     var nodemailer = require('nodemailer');
@@ -169,50 +227,6 @@ router.post('/send/emailotp', async function (req, res) {
     var mailOptions = {
       from: 'thinkinghatstech@gmail.com',
       to: req.body.user_email,
-      subject: "Email verification OTP",
-      text: "Hi, Your OTP is " + random + ". Petfolio OTP for Signup."
-    };
-
-    transporter.sendMail(mailOptions, function (error, info) {
-      if (error) {
-        console.log(error);
-        res.json({ Status: "Failed", Message: error.response, Data: {}, Code: 404 });
-      } else {
-        res.json({
-          Status: "Success", Message: "OTP Sent To Your Eamil Id", Data: {
-            'email_id': req.body.user_email,
-            'otp': random
-          }, Code: 200
-        });
-      }
-    });
-  }
-  else {
-    res.json({ Status: "Failed", Message: "This email id already exist", Data: {}, Code: 404 });
-  }
-});
-
-router.post('/forgotpassword', async function (req, res) {
-  let phone = await userdetailsModel.findOne({ user_email: req.body.user_email });
-  if (phone == null) {
-    res.json({ Status: "Failed", Message: "Invalid Eamil id", Data: {}, Code: 404 });
-  } else {
-    result = phone.password;
-    console.log(result);
-    let random = result;
-    var nodemailer = require('nodemailer');
-    var transporter = nodemailer.createTransport({
-      service: 'gmail',
-      host: 'smtp.gmail.com',
-      auth: {
-        user: 'carpeinfinitus@gmail.com',
-        pass: 'Petfolio!@#$%3'
-      }
-    });
-
-    var mailOptions = {
-      from: 'carpeinfinitus@gmail.com',
-      to: req.body.user_email,
       subject: "Forgot password",
       text: "Hi, This is your password " + random + "."
     };
@@ -221,7 +235,7 @@ router.post('/forgotpassword', async function (req, res) {
       if (error) {
         console.log(error);
       } else {
-        res.json({ Status: "Success", Message: "Eamil id sent successfully", Data: {}, Code: 200 });
+        res.json({ Status: "Success", Message: "Email id sent successfully", Data: {}, Code: 200 });
       }
     });
   }
@@ -259,15 +273,20 @@ router.post('/mobile/login', async function (req, res) {
   } else if (userdetails.length === 0) {
     res.json({ Status: "Failed", Message: "No records found for the provided criteria", Data: {}, Code: 400 });
   } else {
-    userdetails = userdetails[0];
-    let sublist = await userSubscriptionModel.find({ userid: userdetails._id, expired: false }).sort({ enddate: 1 });
-    if (sublist.length > 0) {
-      let list = await subscriptionModel.find({ _id: sublist[0].subscriptionid });
-      if (list.length > 0) {
-        userdetails.subscriptions.push({ _id: list[0]._id, title: list[0].title, type: list[0].type, startdate: sublist[0].startdate, enddate: sublist[0].enddate, months: sublist[0].months, amount: sublist[0].amount });
+    if (userdetails.filter(x => x.account_type === req.body.account - type).length > 0) {
+      userdetails = userdetails.filter(x => x.account_type === req.body.account - type)[0];
+      let sublist = await userSubscriptionModel.find({ userid: userdetails._id, expired: false }).sort({ enddate: 1 });
+      if (sublist.length > 0) {
+        let list = await subscriptionModel.find({ _id: sublist[0].subscriptionid });
+        if (list.length > 0) {
+          userdetails.subscriptions.push({ _id: list[0]._id, title: list[0].title, type: list[0].type, startdate: sublist[0].startdate, enddate: sublist[0].enddate, months: sublist[0].months, amount: sublist[0].amount });
+        }
       }
+      res.json({ Status: "Success", Message: "Logged in successfully", Data: userdetails, Code: 200 });
     }
-    res.json({ Status: "Success", Message: "Logged in successfully", Data: userdetails, Code: 200 });
+    else {
+      res.json({ Status: "Success", Message: "Please select the correct account type", Code: 400 });
+    }
   }
 });
 

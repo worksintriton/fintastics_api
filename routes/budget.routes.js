@@ -7,6 +7,7 @@ var budgetModel = require('./../models/budgetModel');
 const transactionModel = require('../models/transactionModel');
 const userdetailsModel = require('../models/userdetailsModel');
 const { Mongoose } = require('mongoose');
+const moment = require('moment');
 
 router.post('/create', async function (req, res) {
   console.log(req.body);
@@ -34,22 +35,26 @@ router.post('/create', async function (req, res) {
         if (err) {
           res.json({ Status: "Failed", Message: err.message, Code: 500 });
         } else {
-          await notificationModel.create({
-            user_id: req.body.user_id,
+
+          let params = {
+            user_id: req.body.budget_userid,
             notify_title: 'New Budget Plan Created',
-            notify_descri: 'Created budget plan ' + req.body.budget_title + " " + (req.body.period_type === "Custom" ? "Onetime" : req.body.period_type) + " plan",
+            notify_descri: 'Created budget plan ' + req.body.budget_title + " " + (req.body.budget_period_type === "Custom" ? "Onetime" : req.body.budget_period_type),
             notify_img: '/images/notification/new-budget.png',
-            notify_time: '',
-            notify_status: 'Unread',
             notify_color: '#322274',
-            date_and_time: req.body.transaction_date,
-            delete_status: false
-          },
-            function (err, notification) {
-              console.log(notification)
-              //res.json({ Status: "Success", Message: "Notification Added successfully", Data: res, Code: 200 });
-              res.json({ Status: "Success", Message: "Added successfully", Data: budget, Code: 200 });
-            });
+          };
+          global.push_notification(params);
+
+          let parent = await userdetailsModel.findById(req.body.budget_userid);
+          if (parent != null) {
+            let childs = await userdetailsModel.find({ "parent_of": parent_code = parent.parent_code });
+            for (let i = 0; i < childs.length; i++) {
+              params.user_id = childs[i]._id;
+              global.push_notification(params);
+            }
+          }
+
+          res.json({ Status: "Success", Message: "Added successfully", Data: budget, Code: 200 });
         }
       });
   }
@@ -119,10 +124,10 @@ router.get('/getlist', async function (req, res) {
     }
     if (req.query.status) {
       if (req.query.status === 'Active') {
-        params.budget_end_date = { $gte: new Date() }
+        params.budget_end_date = { $gte: new Date(new Date().toDateString()) }
       }
       else if (req.query.status === 'Closed') {
-        params.budget_end_date = { $lte: new Date() }
+        params.budget_end_date = { $lt: new Date(new Date().toDateString()) }
       }
     }
     if (req.query.period_type) {
@@ -376,7 +381,8 @@ router.post("/budget_graph", async function (req, res) {
       bottom_list.forEach((x, i) => {
         transactions.forEach(transaction => {
           if (budget.budget_period_type === "Annually") {
-            if (transaction._id === x) {
+            let months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            if (months[transaction._id - 1] === x) {
               result[i].push(transaction.transaction_amount);
             }
           } else {
@@ -393,7 +399,7 @@ router.post("/budget_graph", async function (req, res) {
         });
         switch (budget.budget_period_type) {
           case "Custom":
-            bottom_list[i] = new Date(x).toLocaleString("en-GB").substring(0, 5);
+            bottom_list[i] = moment(x).tz(req.body.timezone).format("DD-MM-YY"); //new Date(x).toLocaleString("en-GB").substring(0, 5);
             break;
           case "Weekly":
           case "Monthly":
