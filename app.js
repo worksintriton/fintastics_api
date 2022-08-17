@@ -35,10 +35,6 @@ var subscription = require('./routes/subscription.routes');
 
 var userSubscription = require('./routes/userSubscription.routes');
 
-var chat = require('./routes/chat.routes');
-
-var conversation = require('./routes/conversations.routes');
-
 /*Database connectivity*/
 
 BaseUrl = "http://35.88.62.26:3000/api";
@@ -175,10 +171,6 @@ app.use('/api/currency', currency);
 app.use('/api/subscription', subscription);
 
 app.use('/api/usersubscription', userSubscription);
-
-app.use('/api/chat', chat);
-
-app.use('/api/conversation', conversation);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
