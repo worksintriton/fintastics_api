@@ -8,7 +8,6 @@ var userdetailsModel = require('./../models/userdetailsModel');
 var notificationModel = require('./../models/notificationModel');
 const subscriptionModel = require('../models/subscriptionModel');
 const budgetModel = require('../models/budgetModel');
-const { db } = require('../models/budgetModel');
 const moment = require('moment');
 
 router.post('/create', async function (req, res) {
@@ -57,10 +56,10 @@ router.post('/create', async function (req, res) {
               notify_color: '#322274',
             });
 
-            let current_user = await db.userdetailsModel.findById(req.body.user_id);
+            let current_user = await userdetailsModel.findById(req.body.user_id);
             let parent = null;
             if (req.body.transaction_budget_id === "" && current_user != null && current_user.parent_of !== "") {
-              parent = await db.userdetailsModel.findOne({ parent_code: current_user.parent_of });
+              parent = await userdetailsModel.findOne({ parent_code: current_user.parent_of });
               if (parent != null) {
                 global.push_notification({
                   user_id: parent._id,
@@ -74,7 +73,7 @@ router.post('/create', async function (req, res) {
 
             if (req.body.transaction_budget_id !== "") {
               let parentkey = current_user.parent_of !== "" ? current_user.parent_of : current_user.parent_code;
-              await db.userdetailsModel.aggregate([{ $match: { $or: [{ "parent_of": parentkey }, { "parent_code": parentkey }] } }]).exec(async function (err, others) {
+              await userdetailsModel.aggregate([{ $match: { $or: [{ "parent_of": parentkey }, { "parent_code": parentkey }] } }]).exec(async function (err, others) {
                 for (let i = 0; i < others.length; i++) {
                   if (others[i]._id != req.body.user_id) {
                     global.push_notification({
