@@ -8,7 +8,7 @@ var userdetailsModel = require('./../models/userdetailsModel');
 var notificationModel = require('./../models/notificationModel');
 const subscriptionModel = require('../models/subscriptionModel');
 const budgetModel = require('../models/budgetModel');
-const moment = require('moment');
+const moment = require('moment-timezone');
 
 router.post('/create', async function (req, res) {
   let valid = true;
@@ -364,7 +364,7 @@ router.post('/income/report', async function (req, res) {
 router.post('/expenditure/report', async function (req, res) {
   income_expense_report(req, res, 'Debit');
 });
-async function income_expense_report(req, res) {
+async function income_expense_report(req, res, filter) {
   try {
     let params = { user_id: req.body.user_id }
     if (req.body.start_date && req.body.end_date && req.body.start_date !== '' && req.body.end_date !== '') {
@@ -383,7 +383,7 @@ async function income_expense_report(req, res) {
         "$group": {
           "_id": {
             "transaction_way": "$transaction_way",
-            "transaction_currency": "$transaction_currency",
+            "transaction_currency_type": "$transaction_currency_type",
             "system_date": { $dateToString: { format: "%Y-%m-%d", date: "$system_date" } }
           },
           "amount": { "$sum": "$transaction_amount" }
@@ -393,7 +393,7 @@ async function income_expense_report(req, res) {
         "$group": {
           "_id": {
             "system_date": "$_id.system_date",
-            "transaction_currency": "$_id.transaction_currency"
+            "transaction_currency_type": "$_id.transaction_currency_type"
           },
           "by_transaction_way": {
             "$push": {
@@ -418,9 +418,9 @@ async function income_expense_report(req, res) {
           let currency = "";
           translist.forEach(x => {
             x.by_transaction_way.forEach(x1 => {
-              currency = x1.id.transaction_currency;
+              currency = x1.id.transaction_currency_type;
               if (filter === x1.transaction_way) {
-                final_data.push({ _id: x._id.system_date, price: x1.amount, currency: x._id.transaction_currency });
+                final_data.push({ _id: x._id.system_date, price: x1.amount, currency: x._id.transaction_currency_type });
               }
               if (x1.transaction_way === "Credit") {
                 total_credit_value += x1.amount;
@@ -578,8 +578,8 @@ router.post('/dashboard/data', async function (req, res) {
     {
       $addFields: {
         "transaction_desc_id": { $toObjectId: "$transaction_desc" },
-        "transaction_sub_desc_id": { $toObjectId: "$transaction_sub_desc" },
-        "transaction_type_id": { $toObjectId: "$transaction_type" }
+        "transaction_sub_desc_id": { $toObjectId: "$transaction_sub_desc" }/*,
+        "transaction_type_id": { $toObjectId: "$transaction_type" }*/
       }
     },
     {
