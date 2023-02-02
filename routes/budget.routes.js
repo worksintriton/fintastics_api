@@ -78,7 +78,7 @@ router.post('/getlist_id', function (req, res) {
   });
 });
 
-router.get('/getlist', async function (req, res) {
+async function getlist(params, res){
   try {
     let skip = 0, limit = 10, timezone = "+0530";
     let params = { delete_status: false };
@@ -98,15 +98,15 @@ router.get('/getlist', async function (req, res) {
           month_week: { $add: [{ $ceil: { $divide: [{ $subtract: [{ $dayOfMonth: { date: "$budget_start_date", timezone: timezone } }, { $mod: [{ $add: [{ $subtract: [{ $dayOfWeek: { date: "$budget_start_date", timezone: timezone } }, 1] }, 7] }, 7] }] }, 7] } }, 1] }
         }
       }];
-    if (req.query.skip) {
-      skip = parseInt(req.query.skip);
+    if (params.skip) {
+      skip = parseInt(params.skip);
     }
-    if (req.query.limit) {
-      limit = parseInt(req.query.limit);
+    if (params.limit) {
+      limit = parseInt(params.limit);
     }
-    if (req.query.userid) {
-      let userids = [req.query.userid];
-      let useragg = userdetailsModel.aggregate([{ "$match": { "_id": new Mongoose().Types.ObjectId(req.query.userid) } },
+    if (params.userid) {
+      let userids = [params.userid];
+      let useragg = userdetailsModel.aggregate([{ "$match": { "_id": new Mongoose().Types.ObjectId(params.userid) } },
       {
         "$lookup": {
           "from": "userdetails",
@@ -122,40 +122,40 @@ router.get('/getlist', async function (req, res) {
       });
       params.budget_userid = { "$in": userids };
     }
-    if (req.query.status) {
-      if (req.query.status === 'Active') {
+    if (params.status) {
+      if (params.status === 'Active') {
         params.budget_end_date = { $gte: new Date(new Date().toDateString()) }
       }
-      else if (req.query.status === 'Closed') {
+      else if (params.status === 'Closed') {
         params.budget_end_date = { $lt: new Date(new Date().toDateString()) }
       }
     }
-    if (req.query.period_type) {
-      params.budget_period_type = req.query.period_type;
+    if (params.period_type) {
+      params.budget_period_type = params.period_type;
     }
-    if (req.query.year) {
-      params.year = parseInt(req.query.year);
+    if (params.year) {
+      params.year = parseInt(params.year);
     }
-    if (req.query.month) {
-      params.month = parseInt(req.query.month);
+    if (params.month) {
+      params.month = parseInt(params.month);
     }
-    if (req.query.month_week) {
-      params.month_week = parseInt(req.query.month_week);
+    if (params.month_week) {
+      params.month_week = parseInt(params.month_week);
     }
-    if (req.query.start_date && req.query.end_date) {
-      params.budget_start_date = { $gte: new Date(req.query.start_date), $lte: new Date(req.query.end_date + "T23:59:59") };
+    if (params.start_date && params.end_date) {
+      params.budget_start_date = { $gte: new Date(params.start_date), $lte: new Date(params.end_date + "T23:59:59") };
     }
-    else if (req.query.start_date) {
-      params.budget_start_date = { $gte: new Date(req.query.start_date) };
+    else if (params.start_date) {
+      params.budget_start_date = { $gte: new Date(params.start_date) };
     }
-    else if (req.query.end_date) {
-      params.budget_start_date = { $lte: new Date(req.query.end_date) };
+    else if (params.end_date) {
+      params.budget_start_date = { $lte: new Date(params.end_date) };
     }
-    if (req.query.timezone) {
-      timezone = req.query.timezone;
+    if (params.timezone) {
+      timezone = params.timezone;
     }
-    if (req.query.id) {
-      params.id = req.query.id;
+    if (params.id) {
+      params.id = params.id;
     }
     let trans_params = { delete_status: false, transaction_way: 'Debit' };
     aggr_params.push({ "$match": params });
@@ -192,13 +192,13 @@ router.get('/getlist', async function (req, res) {
           x1.createdAt = new Date(x1.createdAt).toLocaleDateString("en-CA") + " " + new Date(x1.createdAt).toLocaleTimeString("en-US", { hour: '2-digit', minute: '2-digit' });
           x.totalExpense += x1.transaction_amount;
         });
-        if (!req.query.with_transactions || req.query.with_transactions === 'false') {
+        if (!params.with_transactions || params.with_transactions === 'false') {
           delete x.transactions;
         }
       });
       let resResult = [];
-      if (req.query.groupby) {
-        switch (req.query.groupby.toLowerCase()) {
+      if (params.groupby) {
+        switch (params.groupby.toLowerCase()) {
           case "weekly":
             budget_list.reduce(function (result, current) {
               let subresResult = resResult.filter(x => x.name === current.month_week);
@@ -250,6 +250,14 @@ router.get('/getlist', async function (req, res) {
   catch (ex) {
     res.json({ Status: "Failure", Error: ex.message, Code: 400 });
   }
+}
+
+router.get('/getlist', async function (req, res) {
+  getlist(req.query,res);
+});
+
+router.post('/getlist', async function (req, res) {
+  getlist(req.body,res);
 });
 
 

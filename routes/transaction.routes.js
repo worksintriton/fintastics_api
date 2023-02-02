@@ -14,8 +14,10 @@ router.post('/create', async function (req, res) {
   let valid = true;
   if (req.body.transaction_budget_id !== "") {
     let budget = await budgetModel.findById(req.body.transaction_budget_id);
-    if (budget != null && !(new Date(req.body.transaction_date) >= new Date(budget.budget_start_date) &&
-      new Date(req.body.transaction_date) <= new Date(budget.budget_end_date))) {
+    let transaction_date = new Date(new Date(req.body.transaction_date).toLocaleDateString());
+    let start_date = new Date(new Date(budget.budget_start_date).toLocaleDateString());
+    let end_date = new Date(new Date(budget.budget_end_date).toLocaleDateString());
+    if (budget != null && !(transaction_date >= start_date && transaction_date <= end_date)) {
       valid = false;
       let msg = "This Budget Limit is only valid from " + new Date(budget.budget_start_date).toLocaleDateString("en-IN", { month: 'short', day: '2-digit', year: '2-digit' }) + " to " + new Date(budget.budget_end_date).toLocaleDateString("en-IN", { month: 'short', day: '2-digit', year: '2-digit' }) + ". Edit the date.";
       res.json({ Status: "Success", Message: msg, budget_msg: msg, Code: 400 });

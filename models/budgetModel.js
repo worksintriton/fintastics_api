@@ -3,16 +3,31 @@ var timestamps = require('mongoose-timestamp');
 const Schema = mongoose.Schema; 
 
 var budgetSchema = new mongoose.Schema({  
-  budget_title :  String,
+  budget_title :  {
+    type: String,
+    required: [true, "budget_title is mandatory"]
+  },
   //budget_type : String,
-  budget_period_type : String,
-  budget_amount : Number,
+  budget_period_type : {
+    type: String,
+    required: [true, "budget_period_type is mandatory"]
+  },
+  budget_amount : {
+    type: Number,
+    required: [true, "budget_amount is mandatory"]
+  },
   budget_currency : String,
   budget_currency_symbol: String,
   budget_cat : Array,
   budget_account :Array,
-  budget_start_date : Date,
-  budget_end_date : Date,
+  budget_start_date : {
+    type: Date,
+    required: [true, "budget_start_date is mandatory"]
+  },
+  budget_end_date : {
+    type: Date,
+    required: [true, "budget_end_date is mandatory"]
+  },
   //budget_value : Number,
   //budget_head_type : Boolean,
   budget_notification : Boolean,

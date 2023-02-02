@@ -146,6 +146,9 @@ router.delete('/delete/:id', function (req, res) {
 
 
 router.put('/update/:id', function (req, res) {
+  if(req.body.password === ""){
+    delete req.body.password;
+  }
   userdetailsModel.findByIdAndUpdate(req.params.id, req.body, { new: true }, function (err, UpdatedDetails) {
     if (err) return res.json({ Status: "Failed", Message: "Internal Server Error", Data: {}, Code: 500 });
     console.log(err);
@@ -273,7 +276,7 @@ router.post('/mobile/login', async function (req, res) {
   } else if (userdetails.length === 0) {
     res.json({ Status: "Failed", Message: "No records found for the provided criteria", Data: {}, Code: 400 });
   } else {
-    if (userdetails.filter(x => x.account_type === req.body.account - type).length > 0) {
+    if (userdetails.filter(x => x.account_type === req.body.account_type).length > 0) {
       userdetails = userdetails.filter(x => x.account_type === req.body.account - type)[0];
       let sublist = await userSubscriptionModel.find({ userid: userdetails._id, expired: false }).sort({ enddate: 1 });
       if (sublist.length > 0) {
@@ -348,7 +351,7 @@ router.get('/getlist', function (req, res) {
 });
 
 router.post('/mobile/update/fb_token', function (req, res) {
-  userdetailsModel.findByIdAndUpdate(req.body.user_id, req.body, { new: true }, function (err, UpdatedDetails) {
+  userdetailsModel.findByIdAndUpdate(req.body.user_id, {fb_token: req.body.fb_token}, { new: true }, function (err, UpdatedDetails) {
     if (err) return res.json({ Status: "Failed", Message: "Internal Server Error", Data: {}, Code: 500 });
     res.json({ Status: "Success", Message: "FB Updated", Data: UpdatedDetails, Code: 200 });
   });
@@ -358,7 +361,9 @@ router.post('/mobile/update/fb_token', function (req, res) {
 
 
 router.post('/block_unblock_user', function (req, res) {
-  console.log(req.body);
+  if(req.body.password === ""){
+    delete req.body.password;
+  }
   userdetailsModel.findByIdAndUpdate(req.body.user_id, req.body, { new: true }, function (err, UpdatedDetails) {
     if (err) return res.json({ Status: "Failed", Message: "Internal Server Error", Data: {}, Code: 500 });
     console.log(err);
@@ -371,6 +376,9 @@ router.post('/block_unblock_user', function (req, res) {
 
 
 router.post('/mobile/update/profile', function (req, res) {
+  if(req.body.password === ""){
+    delete req.body.password;
+  }
   userdetailsModel.findByIdAndUpdate(req.body._id, req.body, { new: true }, function (err, UpdatedDetails) {
     if (err) return res.json({ Status: "Failed", Message: "Internal Server Error", Data: {}, Code: 500 });
     res.json({ Status: "Success", Message: "Profile Updated", Data: UpdatedDetails, Code: 200 });
